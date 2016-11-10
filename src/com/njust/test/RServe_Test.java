@@ -17,9 +17,5 @@ public class RServe_Test
 		test.make(str);
 		str[1] = "set.seed(5345365)";
 		test.make(str);
-		str[1] = "set.seed(9786733)";
-		test.make(str);
-		str[1] = "set.seed(4765869)";
-		test.make(str);
 	}
 }
