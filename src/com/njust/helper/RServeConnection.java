@@ -1,5 +1,7 @@
 package com.njust.helper;
 
+import java.util.List;
+
 import org.rosuda.REngine.Rserve.RConnection;
 
 public class RServeConnection
@@ -20,12 +22,12 @@ public class RServeConnection
 		folderPath = diskName + "://" + folderName + "/" + fileName + "-";
 	}
 	
-	public static String getFilePath()
+	public String getFilePath()
 	{
 		return filePath;
 	}
 
-	public static void make(String cmdLine[])
+	public static void make(List list)
 	{
 		filePath = folderPath + index++ + ".jpg";
 		
@@ -33,8 +35,8 @@ public class RServeConnection
 		{
 			RConnection c = new RConnection(); // 打开RServe连接
 			c.eval("jpeg('" + filePath + "')"); // 图片路径
-			for (int i = 0; i < cmdLine.length; i++)
-				c.eval(cmdLine[i]); // 依次执行R命令
+			for (int i = 0; i < list.size(); i++)
+				c.eval(list.get(i).toString()); // 依次执行R命令
 			c.eval("dev.off()"); // 结束此次渲染
 			c.close();
 		} catch (Exception exception)
