@@ -60,7 +60,7 @@ public class Panel_Test_SWT
 	protected void createContents()
 	{
 		shell = new Shell();
-		shell.setSize(800, 657);
+		shell.setSize(800, 660);
 		shell.setText("SWT Application");
 		
 		Button btn_run = new Button(shell, SWT.NONE);
@@ -78,7 +78,6 @@ public class Panel_Test_SWT
 		list.add("set.seed(1234567)");
 		list.add("test.sim = garch.sim(alpha = c(0.02,0.05), beta = .9, n = 500)");
 		list.add("plot(test.sim, type = 'o', ylab = expression(r[t]), xlab = 't')");
-		
 		
 		btn_run.addSelectionListener(new SelectionAdapter()
 		{

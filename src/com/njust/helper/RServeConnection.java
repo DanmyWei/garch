@@ -1,7 +1,6 @@
 package com.njust.helper;
 
 import java.util.List;
-
 import org.rosuda.REngine.Rserve.RConnection;
 
 public class RServeConnection
