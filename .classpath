@@ -16,5 +16,6 @@
 	<classpathentry kind="lib" path="C:/dev/MyEclipse/plugins/org.eclipse.ui.forms_3.6.1.v20130822-1117.jar" sourcepath="C:/dev/MyEclipse/plugins/org.eclipse.ui.forms_3.6.1.v20130822-1117.jar"/>
 	<classpathentry kind="lib" path="C:/dev/jar_package/Rserve/REngine.jar"/>
 	<classpathentry kind="lib" path="C:/dev/jar_package/Rserve/RserveEngine.jar"/>
+	<classpathentry kind="lib" path="C:/dev/jar_package/LogForJava/log4j-1.2.12.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

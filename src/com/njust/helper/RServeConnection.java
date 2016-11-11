@@ -15,7 +15,7 @@ public class RServeConnection
 		folderPath = "D://R-Data/test-"; // 默认写入D盘R-Data文件夹
 	}
 
-	public static void setFolderPath(String diskName, String folderName,
+	public void setFolderPath(String diskName, String folderName,
 			String fileName)
 	{
 		folderPath = diskName + "://" + folderName + "/" + fileName + "-";
@@ -26,7 +26,7 @@ public class RServeConnection
 		return filePath;
 	}
 
-	public static void make(List list)
+	public void make(List list)
 	{
 		filePath = folderPath + index++ + ".jpg";
 		
