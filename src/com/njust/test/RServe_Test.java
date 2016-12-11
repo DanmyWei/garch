@@ -6,7 +6,6 @@ import com.njust.helper.RServeConnection;
 
 public class RServe_Test
 {
-
 	public static void main(String[] args)
 	{
 		RServeConnection test = new RServeConnection(); // 实例化对象

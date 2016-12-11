@@ -17,5 +17,6 @@
 	<classpathentry kind="lib" path="C:/dev/jar_package/Rserve/REngine.jar"/>
 	<classpathentry kind="lib" path="C:/dev/jar_package/Rserve/RserveEngine.jar"/>
 	<classpathentry kind="lib" path="C:/dev/jar_package/LogForJava/log4j-1.2.12.jar"/>
+	<classpathentry kind="lib" path="C:/dev/jar_package/JUnit/junit-4.12.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
