@@ -2,6 +2,7 @@ package com.njust.window;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.io.*;
 
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
@@ -75,7 +76,7 @@ public class Panel
 
 		Button btn_run = new Button(shell, SWT.NONE);
 		btn_run.setBounds(531, 653, 80, 27);
-		btn_run.setText("运行");
+		btn_run.setText("分析");
 
 		Button btn_open = new Button(shell, SWT.NONE);
 		btn_open.setBounds(531, 616, 80, 27);
@@ -110,13 +111,19 @@ public class Panel
 		{
 			public void widgetSelected(SelectionEvent e)
 			{
-				rsc.make(list);
-				Display display = Display.getDefault();
-				Image image = new Image(display, rsc.getFilePath());
-				ImageData data = image.getImageData();
-				data = data.scaledTo(600, 600);
-				image = new Image(display, data);
-				lblNewLabel.setImage(image);
+				try
+				{
+					rsc.make(list);
+					Display display = Display.getDefault();
+					Image image = new Image(display, rsc.getFilePath());
+					ImageData data = image.getImageData();
+					data = data.scaledTo(600, 600);
+					image = new Image(display, data);
+					lblNewLabel.setImage(image);
+				}catch(Exception ex)
+				{
+					System.out.println(ex.toString());
+				}
 			}
 		});
 
@@ -132,6 +139,8 @@ public class Panel
 				else
 					inputFilePath = "";
 				text_input.setText(inputFilePath);
+				inputFilePath = inputFilePath.replace("\\", "/");
+				System.out.println(inputFilePath);
 			}
 		});
 	}

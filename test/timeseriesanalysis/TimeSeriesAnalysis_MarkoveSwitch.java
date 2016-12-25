@@ -78,7 +78,7 @@ public class TimeSeriesAnalysis_MarkoveSwitch {
 				}
 			};
 			File[] filelist = files.listFiles(filefilter);
-			for (File cfile : filelist) {
+			for (File cfile : filelist){
 				if(!cfile.getName().contains("PredictError"))
 				{
 					
