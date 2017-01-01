@@ -140,7 +140,7 @@ public class Panel
 					inputFilePath = "";
 				text_input.setText(inputFilePath);
 				inputFilePath = inputFilePath.replace("\\", "/");
-				System.out.println(inputFilePath);
+				System.out.println("FilePath: "+inputFilePath);
 			}
 		});
 	}
