@@ -60,7 +60,8 @@ public class TimeSeriesAnalysis
 			{
 				re.eval("k<-" + String.valueOf(k));
 				System.out.println("k=" + k);
-				REXP x = re.eval("mod.mswm=msmFit(mod,k,p=0,sw=c(T,T),control=list(parallel=F))");
+				REXP x = re
+						.eval("mod.mswm=msmFit(mod,k,p=0,sw=c(T,T),control=list(parallel=F))");
 				System.out.println(x.asString());
 				REXP mswm = re.eval("mod.mswm");
 				if (!mswm.isNull())
@@ -75,7 +76,7 @@ public class TimeSeriesAnalysis
 			}
 			if (k <= 1)
 			{
-				//re.eval("plot(temp,type='b')");
+				// re.eval("plot(temp,type='b')");
 				System.out.println("无法建模");
 				return;
 			}

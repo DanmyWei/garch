@@ -108,10 +108,11 @@ public class Panel
 		final List list = new ArrayList();
 
 		list.add("library(TSA)");
-		list.add("set.seed(1234567)");
-		list.add("test.sim = garch.sim(alpha = c(0.02,0.05), beta = .9, n = 500)");
-		list.add("plot(test.sim, type = 'o', ylab = expression(r[t]), xlab = 't')");
-
+		list.add("library(rjson)");
+		list.add("json_data<-fromJSON(paste(readLines('D:/workspace/garch/example/c4.2xlarge-spotprice_us-east-1b.json'), collapse=''))");
+//		list.add("");
+//		list.add("");
+		
 		btn_run.addSelectionListener(new SelectionAdapter()
 		{
 			public void widgetSelected(SelectionEvent e)

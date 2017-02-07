@@ -74,10 +74,7 @@ public class Panel_Test_SWT
 		rsc.setFolderPath("D", "R-Data", "garch");
 		
 		final List list = new ArrayList();
-		list.add("library(TSA)");
-		list.add("set.seed(1234567)");
-		list.add("test.sim = garch.sim(alpha = c(0.02,0.05), beta = .9, n = 500)");
-		list.add("plot(test.sim, type = 'o', ylab = expression(r[t]), xlab = 't')");
+		
 		
 		btn_run.addSelectionListener(new SelectionAdapter()
 		{

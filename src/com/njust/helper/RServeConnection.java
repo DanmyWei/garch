@@ -28,15 +28,15 @@ public class RServeConnection
 
 	public void make(List list)
 	{
-		filePath = folderPath + index++ + ".jpg";
+//		filePath = folderPath + index++ + ".jpg";
 		
 		try
 		{
 			RConnection c = new RConnection(); // 打开RServe连接
-			c.eval("jpeg('" + filePath + "')"); // 图片路径
+//			c.eval("jpeg('" + filePath + "')"); // 图片路径
 			for (int i = 0; i < list.size(); i++)
 				c.eval(list.get(i).toString()); // 依次执行R命令
-			c.eval("dev.off()"); // 结束此次渲染
+//			c.eval("dev.off()"); // 结束此次渲染
 			c.close();
 		} catch (Exception exception)
 		{
