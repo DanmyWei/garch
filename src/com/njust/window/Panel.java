@@ -15,6 +15,7 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.wb.swt.SWTResourceManager;
+import org.rosuda.REngine.REXP;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -81,7 +82,7 @@ public class Panel
 
 		Button btn_run = new Button(shell, SWT.NONE);
 		btn_run.setBounds(531, 653, 80, 27);
-		btn_run.setText("分析");
+		btn_run.setText("建模");
 
 		Button btn_open = new Button(shell, SWT.NONE);
 		btn_open.setBounds(531, 616, 80, 27);
@@ -107,11 +108,8 @@ public class Panel
 
 		final List list = new ArrayList();
 
-		list.add("library(TSA)");
-		list.add("library(rjson)");
-		list.add("json_data<-fromJSON(paste(readLines('D:/workspace/garch/example/c4.2xlarge-spotprice_us-east-1b.json'), collapse=''))");
-//		list.add("");
-//		list.add("");
+
+		
 		
 		btn_run.addSelectionListener(new SelectionAdapter()
 		{
@@ -119,7 +117,10 @@ public class Panel
 			{
 				try
 				{
-					rsc.make(list);
+					rsc.start();
+					rsc.read(inputFilePath);
+					rsc.build();//建模
+					rsc.end();
 					Display display = Display.getDefault();
 					Image image = new Image(display, rsc.getFilePath());
 					ImageData data = image.getImageData();

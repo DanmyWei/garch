@@ -80,7 +80,7 @@ public class Panel_Test_SWT
 		{
 			public void widgetSelected(SelectionEvent e)
 			{
-				rsc.make(list);
+//				rsc.make("test");
 				Display display = Display.getDefault();
 				Image image = new Image(display, rsc.getFilePath());
 				ImageData data=image.getImageData();
