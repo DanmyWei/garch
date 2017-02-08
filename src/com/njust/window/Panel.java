@@ -29,6 +29,7 @@ public class Panel
 {
 	protected Shell shell;
 	private String inputFilePath;
+	private String inputFileName;
 	private Text text_input;
 
 	/**
@@ -104,7 +105,7 @@ public class Panel
 		label.setText("数据文件");
 
 		final RServeConnection rsc = new RServeConnection();
-		rsc.setFolderPath("D", "R-Data", "garch");
+		rsc.setFolderPath("D", "R-Data");
 
 		final List list = new ArrayList();
 
@@ -118,8 +119,8 @@ public class Panel
 				try
 				{
 					rsc.start();
-					rsc.read(inputFilePath);
-					rsc.build();//建模
+					rsc.read(inputFilePath,inputFileName);
+					rsc.build(1,1);//建模
 					rsc.end();
 					Display display = Display.getDefault();
 					Image image = new Image(display, rsc.getFilePath());
@@ -141,8 +142,11 @@ public class Panel
 				fileDialog.open();
 
 				if (!fileDialog.getFileName().isEmpty())
+				{
 					inputFilePath = fileDialog.getFilterPath() + "\\"
 							+ fileDialog.getFileName();
+					inputFileName = fileDialog.getFileName().replace(".json", "");
+				}
 				else
 					inputFilePath = "";
 				text_input.setText(inputFilePath);

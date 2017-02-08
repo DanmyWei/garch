@@ -71,7 +71,7 @@ public class Panel_Test_SWT
 		lblNewLabel.setBounds(10, 10, 600, 600);
 		
 		final RServeConnection rsc = new RServeConnection();
-		rsc.setFolderPath("D", "R-Data", "garch");
+		rsc.setFolderPath("D", "R-Data");
 		
 		final List list = new ArrayList();
 		
