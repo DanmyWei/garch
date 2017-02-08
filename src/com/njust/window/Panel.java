@@ -31,6 +31,8 @@ public class Panel
 	private String inputFilePath;
 	private String inputFileName;
 	private Text text_input;
+	private Text text_q;
+	private Text text_p;
 
 	/**
 	 * Launch the application.
@@ -81,9 +83,9 @@ public class Panel
 		shell.setSize(634, 729);
 		shell.setText("基于GARCH（异方差时间序列模型）的价格预测");
 
-		Button btn_run = new Button(shell, SWT.NONE);
-		btn_run.setBounds(531, 653, 80, 27);
-		btn_run.setText("建模");
+		Button btn_build = new Button(shell, SWT.NONE);
+		btn_build.setBounds(531, 653, 80, 27);
+		btn_build.setText("建模");
 
 		Button btn_open = new Button(shell, SWT.NONE);
 		btn_open.setBounds(531, 616, 80, 27);
@@ -104,23 +106,47 @@ public class Panel
 		label.setBounds(10, 616, 81, 27);
 		label.setText("数据文件");
 
+		text_q = new Text(shell, SWT.BORDER);
+		text_q.setText("1");
+		text_q.setBounds(498, 655, 16, 23);
+
+		Label lblQ = new Label(shell, SWT.NONE);
+		lblQ.setAlignment(SWT.RIGHT);
+		lblQ.setBounds(472, 658, 20, 23);
+		lblQ.setText(",q=");
+
+		text_p = new Text(shell, SWT.BORDER);
+		text_p.setText("1");
+		text_p.setBounds(453, 655, 16, 23);
+
+		Label lblP = new Label(shell, SWT.NONE);
+		lblP.setText("p=");
+		lblP.setAlignment(SWT.RIGHT);
+		lblP.setBounds(430, 658, 17, 23);
+		
+		Label lblGarchpq = new Label(shell, SWT.NONE);
+		lblGarchpq.setText("garch(p,q)模型参数:");
+		lblGarchpq.setFont(SWTResourceManager.getFont("Microsoft YaHei UI", 11, SWT.NORMAL));
+		lblGarchpq.setAlignment(SWT.RIGHT);
+		lblGarchpq.setBounds(270, 655, 154, 23);
+
 		final RServeConnection rsc = new RServeConnection();
 		rsc.setFolderPath("D", "R-Data");
 
 		final List list = new ArrayList();
 
-
-		
-		
-		btn_run.addSelectionListener(new SelectionAdapter()
+		btn_build.addSelectionListener(new SelectionAdapter()
 		{
 			public void widgetSelected(SelectionEvent e)
 			{
 				try
 				{
+					int p, q;
+					p = Integer.valueOf(text_p.getText()).intValue();
+					q = Integer.valueOf(text_q.getText()).intValue();
 					rsc.start();
-					rsc.read(inputFilePath,inputFileName);
-					rsc.build(1,1);//建模
+					rsc.read(inputFilePath, inputFileName);
+					rsc.build(p, q);// 建模
 					rsc.end();
 					Display display = Display.getDefault();
 					Image image = new Image(display, rsc.getFilePath());
@@ -128,7 +154,7 @@ public class Panel
 					data = data.scaledTo(600, 600);
 					image = new Image(display, data);
 					lblNewLabel.setImage(image);
-				}catch(Exception ex)
+				} catch (Exception ex)
 				{
 					System.out.println(ex.toString());
 				}
@@ -145,13 +171,13 @@ public class Panel
 				{
 					inputFilePath = fileDialog.getFilterPath() + "\\"
 							+ fileDialog.getFileName();
-					inputFileName = fileDialog.getFileName().replace(".json", "");
-				}
-				else
+					inputFileName = fileDialog.getFileName().replace(".json",
+							"");
+				} else
 					inputFilePath = "";
 				text_input.setText(inputFilePath);
 				inputFilePath = inputFilePath.replace("\\", "/");
-				System.out.println("FilePath: "+inputFilePath);
+				System.out.println("FilePath: " + inputFilePath);
 			}
 		});
 	}

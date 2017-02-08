@@ -80,7 +80,7 @@ public class RServeConnection
 
 			c.eval("garchmod=garch(x=temp,order=c(" + p + "," + q + "))");
 			c.eval("jpeg('" + filePath + "')");
-			System.out.println(filePath);
+			System.out.println("图像渲染成功 : "+filePath);
 			c.eval("plot(residuals(garchmod),type='h',ylab = 'Standard residual')");
 			c.eval("dev.off()");
 		} catch (Exception exception)
