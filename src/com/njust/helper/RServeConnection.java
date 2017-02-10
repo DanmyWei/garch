@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.rosuda.REngine.REXP;
+import org.rosuda.REngine.REXPMismatchException;
 import org.rosuda.REngine.Rserve.RConnection;
 import org.rosuda.REngine.Rserve.RserveException;
 
@@ -64,13 +65,9 @@ public class RServeConnection
 
 		try
 		{
-			REXP length_f = c.eval("length(f)");
-			int totallength = length_f.asInteger();// 向量长度
-
-			int base = 100;
-			int learnstep = 360;
-			int arimalearnstep = 60;
-			int prestep = 30;
+			int base = 100;//拟合起点
+			int learnstep = 360;//拟合长度
+			int prestep = 30;//每半分钟比较一次
 
 			c.eval("base<-" + String.valueOf(base));
 			c.eval("learnstep<-" + String.valueOf(learnstep));
@@ -81,7 +78,25 @@ public class RServeConnection
 			c.eval("garchmod=garch(x=temp,order=c(" + p + "," + q + "))");
 			c.eval("jpeg('" + filePath + "')");
 			System.out.println("图像渲染成功 : "+filePath);
-			c.eval("plot(residuals(garchmod),type='h',ylab = 'Standard residual')");
+			c.eval("plot(residuals(garchmod),type='l',ylab = 'Standard residual')");
+			c.eval("dev.off()");
+		} catch (Exception exception)
+		{
+			System.out.println(exception.toString());
+			exception.printStackTrace();
+		}
+	}
+	
+	public void predict(int p,int q)
+	{
+		filePath = folderPath + "Predict-garch(" + p + "," + q + ")-"
+				+ inputJsonName + ".jpg";
+		try
+		{
+			REXP length_f = c.eval("length(f)");
+			int totallength = length_f.asInteger();// 向量长度
+			c.eval("jpeg('" + filePath + "')");
+			c.eval("plot(predict(garchmod),type='b')");
 			c.eval("dev.off()");
 		} catch (Exception exception)
 		{
