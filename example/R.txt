@@ -11,6 +11,7 @@ predicted=100
 
 
 garchmod=garch(x=temp,order=c(1,1))
+
 plot(residuals(garchmod),type='l',ylab = 'Standard residual')
 
 difflog<-diff(log(temp))*100
@@ -22,3 +23,13 @@ g2 = garchFit(formula=~garch(1,1),data=difflog,trace=F,cond.dist="std")
 plot(predict(g1,n.ahead=100)$meanError,type='b')
 
 plot(predict(g2,n.ahead=100)$standardDeviation,type='b')
+
+m1=garch(difflog,order=c(1,1))
+summary(m1)
+plot(residuals(m1),type='h')
+qqnorm(residuals(m1))
+qqline(residuals(m1))
+
+m1$coef[1]/(1-m1$coef[2]-m1$coef[3])
+
+sd(diff(log(prepart))*100)^2

@@ -24,6 +24,8 @@ public class Panel
 	private Text text_input;
 	private Text text_q;
 	private Text text_p;
+	private Text text_predict;
+	private Text text_real;
 
 	/**
 	 * Launch the application.
@@ -71,8 +73,12 @@ public class Panel
 	protected void createContents()
 	{
 		shell = new Shell();
-		shell.setSize(634, 792);
+		shell.setSize(634, 854);
 		shell.setText("基于GARCH（异方差时间序列模型）的价格预测");
+		
+		Button btn_abs_pacf = new Button(shell, SWT.NONE);
+		btn_abs_pacf.setText("ABS(PACF)图");
+		btn_abs_pacf.setBounds(108, 727, 80, 27);
 
 		Button btn_build = new Button(shell, SWT.NONE);
 		btn_build.setBounds(531, 653, 80, 27);
@@ -109,6 +115,37 @@ public class Panel
 		text_p = new Text(shell, SWT.BORDER);
 		text_p.setText("1");
 		text_p.setBounds(453, 655, 16, 23);
+		
+		Button btn_predict = new Button(shell, SWT.NONE);
+		btn_predict.setText("预测");
+		btn_predict.setBounds(531, 760, 80, 27);
+		
+        final RServeConnection rsc = new RServeConnection();
+        rsc.setFolderPath("D", "R-Data");
+        
+		btn_predict.addSelectionListener(new SelectionAdapter()
+		{
+			public void widgetSelected(SelectionEvent e)
+			{
+				try
+				{
+					int p, q;
+					p = Integer.valueOf(text_p.getText()).intValue();
+					q = Integer.valueOf(text_q.getText()).intValue();
+					rsc.predict(p, q);// 建模
+					rsc.end();
+					Display display = Display.getDefault();
+					Image image = new Image(display, rsc.getFilePath());
+					ImageData data = image.getImageData();
+					data = data.scaledTo(600, 600);
+					image = new Image(display, data);
+					lblNewLabel.setImage(image);
+				} catch (Exception ex)
+				{
+					System.out.println(ex.toString());
+				}
+			}
+		});
 
 		Label lblP = new Label(shell, SWT.NONE);
 		lblP.setText("p=");
@@ -128,12 +165,62 @@ public class Panel
 		lblGarchpq.setAlignment(SWT.RIGHT);
 		lblGarchpq.setBounds(270, 655, 154, 23);
 		
-		Button btn_predict = new Button(shell, SWT.NONE);
-		btn_predict.setText("预测");
-		btn_predict.setBounds(531, 694, 80, 27);
+		Button btn_acf = new Button(shell, SWT.NONE);
+		btn_acf.setText("ACF图");
+		btn_acf.setBounds(22, 694, 80, 27);
+		
+		Button btn_pacf = new Button(shell, SWT.NONE);
+		btn_pacf.setText("PACF图");
+		btn_pacf.setBounds(108, 694, 80, 27);
+		
+		Button btn_abs_acf = new Button(shell, SWT.NONE);
+		btn_abs_acf.setText("ABS(ACF)图");
+		btn_abs_acf.setBounds(22, 727, 80, 27);
+		
+		Button btn_qq = new Button(shell, SWT.NONE);
+		btn_qq.setText("残差QQ图");
+		btn_qq.setBounds(22, 760, 80, 27);
+		
+		Button btn_res = new Button(shell, SWT.NONE);
+		btn_res.setText("标准残差");
+		btn_res.setBounds(108, 760, 80, 27);
+		
+		Button btn_next = new Button(shell, SWT.NONE);
+		btn_next.setText("下一步长");
+		btn_next.setBounds(531, 711, 80, 27);
+		
+		Label label_3 = new Label(shell, SWT.NONE);
+		label_3.setText("差分拟合方差值:");
+		label_3.setFont(SWTResourceManager.getFont("Microsoft YaHei UI", 11, SWT.NORMAL));
+		label_3.setAlignment(SWT.RIGHT);
+		label_3.setBounds(280, 729, 119, 23);
+		
+		text_predict = new Text(shell, SWT.WRAP);
+		text_predict.setText("1");
+		text_predict.setBounds(405, 732, 64, 17);
+		
+		Label label_4 = new Label(shell, SWT.NONE);
+		label_4.setText("当前实际方差值:");
+		label_4.setFont(SWTResourceManager.getFont("Microsoft YaHei UI", 11, SWT.NORMAL));
+		label_4.setAlignment(SWT.RIGHT);
+		label_4.setBounds(278, 764, 121, 23);
+		
+		text_real = new Text(shell, SWT.WRAP);
+		text_real.setText("1");
+		text_real.setBounds(405, 766, 64, 17);
+		
+		Label label_1 = new Label(shell, SWT.BORDER | SWT.CENTER);
+		label_1.setText("模型诊断");
+		label_1.setFont(SWTResourceManager.getFont("Microsoft YaHei UI", 14, SWT.NORMAL));
+		label_1.setAlignment(SWT.CENTER);
+		label_1.setBounds(10, 660, 189, 145);
+		
+		Label label_2 = new Label(shell, SWT.BORDER | SWT.CENTER);
+		label_2.setText("预测分析");
+		label_2.setFont(SWTResourceManager.getFont("Microsoft YaHei UI", 14, SWT.NORMAL));
+		label_2.setAlignment(SWT.CENTER);
+		label_2.setBounds(270, 691, 244, 114);
 
-		final RServeConnection rsc = new RServeConnection();
-		rsc.setFolderPath("D", "R-Data");
 
 		btn_build.addSelectionListener(new SelectionAdapter()
 		{
@@ -183,30 +270,6 @@ public class Panel
 				{
 					// TODO Auto-generated catch block
 					e1.printStackTrace();
-				}
-			}
-		});
-		
-		btn_predict.addSelectionListener(new SelectionAdapter()
-		{
-			public void widgetSelected(SelectionEvent e)
-			{
-				try
-				{
-					int p, q;
-					p = Integer.valueOf(text_p.getText()).intValue();
-					q = Integer.valueOf(text_q.getText()).intValue();
-					rsc.predict(p, q);// 建模
-					rsc.end();
-					Display display = Display.getDefault();
-					Image image = new Image(display, rsc.getFilePath());
-					ImageData data = image.getImageData();
-					data = data.scaledTo(600, 600);
-					image = new Image(display, data);
-					lblNewLabel.setImage(image);
-				} catch (Exception ex)
-				{
-					System.out.println(ex.toString());
 				}
 			}
 		});

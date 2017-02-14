@@ -71,20 +71,20 @@ public class RServeConnection
 		{
 			int base = 100;//拟合起点
 			int learnstep = 360;//拟合长度
-			int prestep = 100;//每半分钟比较一次
+			int prestep = 30;//每半分钟比较一次
 
 			c.eval("base<-" + String.valueOf(base));
 			c.eval("learnstep<-" + String.valueOf(learnstep));
 			c.eval("prestep<-" + String.valueOf(prestep));
-			c.eval("temp<-f[base:(base+learnstep)]");
-//			c.eval("difflog<-diff(log(temp))*100");
-			c.eval("prepart<-f[(base+learnstep+1):(base+learnstep+prestep)]");
+			c.eval("temp<-f[base:(base+learnstep)]");//原始数据
+			c.eval("d<-diff(log(temp))*100");//差分
+			c.eval("prepart<-f[(base+learnstep+1):(base+learnstep+prestep)]");//观测值
 
-//			c.eval("garchmod=garch(x=temp,order=c(" + p + "," + q + "))");
-			c.eval("g1 = garchFit(formula=~garch(" + p + "," + q + "),data=temp,trace=F,cond.dist='std')");
+			c.eval("m1=garch(x=d,order=c(" + p + "," + q + "))");//拟合garch模型
+//			c.eval("g1 = garchFit(formula=~garch(" + p + "," + q + "),data=temp,trace=F,cond.dist='std')");
 			c.eval("jpeg('" + filePath + "')");
 			System.out.println("图像渲染成功 : "+filePath);
-			c.eval("plot(residuals(g1),type='b',ylab = 'Standard residual')");
+			c.eval("plot(residuals(m1),type='l',ylab = 'Standard residual')");//异方差模型标准残差分布
 			c.eval("abline(h=0)");
 			c.eval("dev.off()");
 		} catch (Exception exception)
@@ -103,7 +103,7 @@ public class RServeConnection
 			REXP length_f = c.eval("length(f)");
 			int totallength = length_f.asInteger();// 向量长度
 			c.eval("jpeg('" + filePath + "')");
-			c.eval("plot(predict(g1,n.ahead=prestep)$standardDeviation,type='b',ylab = 'standardDeviation')");
+//			c.eval("plot(predict(g1,n.ahead=prestep)$standardDeviation,type='b',ylab = 'standardDeviation')");
 //			c.eval("abline(h=coef(predict(g1,n.ahead=prestep)$meanError))");
 			c.eval("dev.off()");
 		} catch (Exception exception)
