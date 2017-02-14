@@ -13,7 +13,7 @@ public class RServeConnection
 	private static int index;
 	private static String folderPath;
 	private static String filePath;
-	private static RConnection c;
+	private static RConnection c = null;
 	private static String inputJsonName;
 
 	public RServeConnection()
@@ -34,7 +34,8 @@ public class RServeConnection
 
 	public void start() throws RserveException
 	{
-		c = new RConnection();
+		if(c == null || !c.isConnected())
+			c = new RConnection();
 	}
 
 	public void end() throws RserveException
@@ -46,10 +47,13 @@ public class RServeConnection
 	// 读取数据和加载库
 	public void read(String jsonPath, String jsonName) throws RserveException
 	{
+		if(c == null || !c.isConnected())
+			c = new RConnection();
 		inputJsonName = jsonName;
 		List list = new ArrayList();
 		list.add("library(TSA)");
 		list.add("library(rjson)");
+		list.add("library(fGarch)");
 		list.add("json_data<-fromJSON(paste(readLines('" + jsonPath
 				+ "'), collapse=''))");
 		list.add("source('D:/workspace/garch/test/timeseriesanalysis/ParseSpotScript.R')");
@@ -67,18 +71,21 @@ public class RServeConnection
 		{
 			int base = 100;//拟合起点
 			int learnstep = 360;//拟合长度
-			int prestep = 30;//每半分钟比较一次
+			int prestep = 100;//每半分钟比较一次
 
 			c.eval("base<-" + String.valueOf(base));
 			c.eval("learnstep<-" + String.valueOf(learnstep));
 			c.eval("prestep<-" + String.valueOf(prestep));
 			c.eval("temp<-f[base:(base+learnstep)]");
+//			c.eval("difflog<-diff(log(temp))*100");
 			c.eval("prepart<-f[(base+learnstep+1):(base+learnstep+prestep)]");
 
-			c.eval("garchmod=garch(x=temp,order=c(" + p + "," + q + "))");
+//			c.eval("garchmod=garch(x=temp,order=c(" + p + "," + q + "))");
+			c.eval("g1 = garchFit(formula=~garch(" + p + "," + q + "),data=temp,trace=F,cond.dist='std')");
 			c.eval("jpeg('" + filePath + "')");
 			System.out.println("图像渲染成功 : "+filePath);
-			c.eval("plot(residuals(garchmod),type='l',ylab = 'Standard residual')");
+			c.eval("plot(residuals(g1),type='b',ylab = 'Standard residual')");
+			c.eval("abline(h=0)");
 			c.eval("dev.off()");
 		} catch (Exception exception)
 		{
@@ -96,7 +103,8 @@ public class RServeConnection
 			REXP length_f = c.eval("length(f)");
 			int totallength = length_f.asInteger();// 向量长度
 			c.eval("jpeg('" + filePath + "')");
-			c.eval("plot(predict(garchmod),type='b')");
+			c.eval("plot(predict(g1,n.ahead=prestep)$standardDeviation,type='b',ylab = 'standardDeviation')");
+//			c.eval("abline(h=coef(predict(g1,n.ahead=prestep)$meanError))");
 			c.eval("dev.off()");
 		} catch (Exception exception)
 		{

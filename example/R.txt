@@ -1,0 +1,24 @@
+library(TSA)
+library(rjson)
+json_data<-fromJSON(paste(readLines('D:/R-Data/SpotData/c4.2xlarge-spotprice_us-east-1d.json'), collapse=''))
+source("D:/workspace/garch/test/timeseriesanalysis/ParseSpotScript.R")
+base<-100
+learnstep<-3600
+prestep<-100
+temp<-f[base:(base+learnstep)]
+prepart<-f[(base+learnstep+1):(base+learnstep+prestep)]
+predicted=100
+
+
+garchmod=garch(x=temp,order=c(1,1))
+plot(residuals(garchmod),type='l',ylab = 'Standard residual')
+
+difflog<-diff(log(temp))*100
+
+g1 = garchFit(formula=~garch(1,1),data=temp,trace=F,cond.dist="std")
+
+g2 = garchFit(formula=~garch(1,1),data=difflog,trace=F,cond.dist="std")
+
+plot(predict(g1,n.ahead=100)$meanError,type='b')
+
+plot(predict(g2,n.ahead=100)$standardDeviation,type='b')

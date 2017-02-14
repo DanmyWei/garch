@@ -12,6 +12,8 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.wb.swt.SWTResourceManager;
+import org.rosuda.REngine.Rserve.RserveException;
+
 import com.njust.helper.RServeConnection;
 
 public class Panel
@@ -142,7 +144,6 @@ public class Panel
 					int p, q;
 					p = Integer.valueOf(text_p.getText()).intValue();
 					q = Integer.valueOf(text_q.getText()).intValue();
-					rsc.start();
 					rsc.read(inputFilePath, inputFileName);
 					rsc.build(p, q);// 建模
 					Display display = Display.getDefault();
@@ -175,6 +176,14 @@ public class Panel
 				text_input.setText(inputFilePath);
 				inputFilePath = inputFilePath.replace("\\", "/");
 				System.out.println("FilePath: " + inputFilePath);
+				try
+				{
+					rsc.start();
+				} catch (RserveException e1)
+				{
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
 			}
 		});
 		
