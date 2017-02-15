@@ -24,7 +24,7 @@ public class Panel
 	private Text text_input;
 	private Text text_q;
 	private Text text_p;
-	private Text text_predict;
+	private Text text_aic;
 	private Text text_real;
 	private int p = 1;
 	private int q = 1;
@@ -78,9 +78,9 @@ public class Panel
 		shell.setSize(634, 854);
 		shell.setText("基于GARCH（异方差时间序列模型）的价格预测");
 		
-		Button btn_abs_pacf = new Button(shell, SWT.NONE);
-		btn_abs_pacf.setText("ABS(PACF)图");
-		btn_abs_pacf.setBounds(108, 727, 80, 27);
+		Button btn_gbox = new Button(shell, SWT.NONE);
+		btn_gbox.setText("p值检验");
+		btn_gbox.setBounds(108, 727, 80, 27);
 
 		Button btn_build = new Button(shell, SWT.NONE);
 		btn_build.setBounds(531, 653, 80, 27);
@@ -167,15 +167,15 @@ public class Panel
 		btn_real.setText("观测方差值");
 		btn_real.setBounds(531, 711, 80, 27);
 		
-		Label label_3 = new Label(shell, SWT.NONE);
-		label_3.setText("拟合方差平均值:");
-		label_3.setFont(SWTResourceManager.getFont("Microsoft YaHei UI", 11, SWT.NORMAL));
-		label_3.setAlignment(SWT.RIGHT);
-		label_3.setBounds(280, 729, 119, 23);
+		Label lblaic = new Label(shell, SWT.NONE);
+		lblaic.setText("拟合模型AIC值:");
+		lblaic.setFont(SWTResourceManager.getFont("Microsoft YaHei UI", 11, SWT.NORMAL));
+		lblaic.setAlignment(SWT.RIGHT);
+		lblaic.setBounds(280, 729, 119, 23);
 		
-		text_predict = new Text(shell, SWT.WRAP);
-		text_predict.setText("");
-		text_predict.setBounds(405, 732, 64, 17);
+		text_aic = new Text(shell, SWT.WRAP);
+		text_aic.setText("");
+		text_aic.setBounds(405, 732, 87, 17);
 		
 		Label label_4 = new Label(shell, SWT.NONE);
 		label_4.setText("实际观测方差值:");
@@ -185,7 +185,7 @@ public class Panel
 		
 		text_real = new Text(shell, SWT.WRAP);
 		text_real.setText("");
-		text_real.setBounds(405, 766, 64, 17);
+		text_real.setBounds(405, 766, 87, 17);
 		
 		Label label_1 = new Label(shell, SWT.BORDER | SWT.CENTER);
 		label_1.setText("模型诊断");
@@ -216,6 +216,7 @@ public class Panel
 					data = data.scaledTo(600, 600);
 					image = new Image(display, data);
 					lblNewLabel.setImage(image);
+					text_aic.setText(Double.toString(rsc.getAIC()));
 				} catch (Exception ex)
 				{
 					System.out.println(ex.toString());
@@ -355,13 +356,13 @@ public class Panel
 			}
 		});
 		
-		btn_abs_pacf.addSelectionListener(new SelectionAdapter()
+		btn_gbox.addSelectionListener(new SelectionAdapter()
 		{
 			public void widgetSelected(SelectionEvent e)
 			{
 				try
 				{
-					rsc.abs_pacf(p, q);
+					rsc.gbox(p, q);
 					Display display = Display.getDefault();
 					Image image = new Image(display, rsc.getFilePath());
 					ImageData data = image.getImageData();

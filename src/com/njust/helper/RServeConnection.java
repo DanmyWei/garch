@@ -22,6 +22,7 @@ public class RServeConnection
 	private static int base = 100;// 拟合起点
 	private static int learnstep = 3600;// 拟合长度
 	private static int prestep = 10;// 每30步计算一次方差
+	private static double aic;
 
 	public RServeConnection()
 	{
@@ -57,6 +58,16 @@ public class RServeConnection
 	public void setReal(double t)
 	{
 		t_real = t;
+	}
+	
+	public void setAIC(double t)
+	{
+		aic = t;
+	}
+
+	public double getAIC()
+	{
+		return (double) (Math.round(aic * 100) / 100.0);
 	}
 
 	public void start() throws RserveException
@@ -112,6 +123,7 @@ public class RServeConnection
 			c.eval("plot(residuals(m1),type='l',ylab = 'Standard residual')");// 异方差模型标准残差分布
 			c.eval("abline(h=0)");
 			c.eval("dev.off()");
+			setAIC(c.eval("AIC(m1)").asDouble());
 		} catch (Exception exception)
 		{
 			System.out.println(exception.toString());
@@ -181,7 +193,7 @@ public class RServeConnection
 					+ "'), collapse=''))");
 			c.eval("source('D:/workspace/garch/test/timeseriesanalysis/real.R')");
 			c.eval("jpeg('" + filePath + "')");
-			c.eval("plot(rf,type='l')");
+			c.eval("plot(rf,type='l',ylab='Conditional Variance',xlab='t/10')");
 			c.eval("dev.off()");
 		} catch (Exception exception)
 		{
@@ -197,7 +209,7 @@ public class RServeConnection
 		try
 		{
 			c.eval("jpeg('" + filePath + "')");
-			c.eval("acf(d)");
+			c.eval("acf(residuals(m1)^2,na.action=na.omit)");
 			c.eval("dev.off()");
 		} catch (Exception exception)
 		{
@@ -213,7 +225,7 @@ public class RServeConnection
 		try
 		{
 			c.eval("jpeg('" + filePath + "')");
-			c.eval("pacf(d)");
+			c.eval("pacf(residuals(m1)^2,na.action=na.omit)");
 			c.eval("dev.off()");
 		} catch (Exception exception)
 		{
@@ -229,7 +241,7 @@ public class RServeConnection
 		try
 		{
 			c.eval("jpeg('" + filePath + "')");
-			c.eval("acf(abs(d))");
+			c.eval("acf(abs(residuals(m1)),na.action=na.omit)");
 			c.eval("dev.off()");
 		} catch (Exception exception)
 		{
@@ -238,14 +250,14 @@ public class RServeConnection
 		}
 	}
 
-	public void abs_pacf(int p, int q)
+	public void gbox(int p, int q)
 	{
-		filePath = folderPath + "ABS_PACF-garch(" + p + "," + q + ")-"
+		filePath = folderPath + "gBox-garch(" + p + "," + q + ")-"
 				+ inputJsonName + ".jpg";
 		try
 		{
 			c.eval("jpeg('" + filePath + "')");
-			c.eval("pacf(abs(d))");
+			c.eval("gBox(m1,method='squared')");
 			c.eval("dev.off()");
 		} catch (Exception exception)
 		{
