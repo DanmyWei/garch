@@ -26,6 +26,8 @@ public class Panel
 	private Text text_p;
 	private Text text_predict;
 	private Text text_real;
+	private int p = 1;
+	private int q = 1;
 
 	/**
 	 * Launch the application.
@@ -123,30 +125,6 @@ public class Panel
         final RServeConnection rsc = new RServeConnection();
         rsc.setFolderPath("D", "R-Data");
         
-		btn_predict.addSelectionListener(new SelectionAdapter()
-		{
-			public void widgetSelected(SelectionEvent e)
-			{
-				try
-				{
-					int p, q;
-					p = Integer.valueOf(text_p.getText()).intValue();
-					q = Integer.valueOf(text_q.getText()).intValue();
-					rsc.predict(p, q);// 建模
-					rsc.end();
-					Display display = Display.getDefault();
-					Image image = new Image(display, rsc.getFilePath());
-					ImageData data = image.getImageData();
-					data = data.scaledTo(600, 600);
-					image = new Image(display, data);
-					lblNewLabel.setImage(image);
-				} catch (Exception ex)
-				{
-					System.out.println(ex.toString());
-				}
-			}
-		});
-
 		Label lblP = new Label(shell, SWT.NONE);
 		lblP.setText("p=");
 		lblP.setAlignment(SWT.RIGHT);
@@ -190,23 +168,23 @@ public class Panel
 		btn_next.setBounds(531, 711, 80, 27);
 		
 		Label label_3 = new Label(shell, SWT.NONE);
-		label_3.setText("差分拟合方差值:");
+		label_3.setText("拟合方差平均值:");
 		label_3.setFont(SWTResourceManager.getFont("Microsoft YaHei UI", 11, SWT.NORMAL));
 		label_3.setAlignment(SWT.RIGHT);
 		label_3.setBounds(280, 729, 119, 23);
 		
 		text_predict = new Text(shell, SWT.WRAP);
-		text_predict.setText("1");
+		text_predict.setText("");
 		text_predict.setBounds(405, 732, 64, 17);
 		
 		Label label_4 = new Label(shell, SWT.NONE);
-		label_4.setText("当前实际方差值:");
+		label_4.setText("实际观测方差值:");
 		label_4.setFont(SWTResourceManager.getFont("Microsoft YaHei UI", 11, SWT.NORMAL));
 		label_4.setAlignment(SWT.RIGHT);
 		label_4.setBounds(278, 764, 121, 23);
 		
 		text_real = new Text(shell, SWT.WRAP);
-		text_real.setText("1");
+		text_real.setText("");
 		text_real.setBounds(405, 766, 64, 17);
 		
 		Label label_1 = new Label(shell, SWT.BORDER | SWT.CENTER);
@@ -228,7 +206,6 @@ public class Panel
 			{
 				try
 				{
-					int p, q;
 					p = Integer.valueOf(text_p.getText()).intValue();
 					q = Integer.valueOf(text_q.getText()).intValue();
 					rsc.read(inputFilePath, inputFileName);
@@ -270,6 +247,170 @@ public class Panel
 				{
 					// TODO Auto-generated catch block
 					e1.printStackTrace();
+				}
+			}
+		});
+		
+		btn_predict.addSelectionListener(new SelectionAdapter()
+		{
+			public void widgetSelected(SelectionEvent e)
+			{
+				try
+				{
+					rsc.predict(p, q);
+					Display display = Display.getDefault();
+					Image image = new Image(display, rsc.getFilePath());
+					ImageData data = image.getImageData();
+					data = data.scaledTo(600, 600);
+					image = new Image(display, data);
+					lblNewLabel.setImage(image);
+					text_predict.setText(Double.toString(rsc.getPredict()));
+					text_real.setText(Double.toString(rsc.getReal()));
+				} catch (Exception ex)
+				{
+					System.out.println(ex.toString());
+				}
+			}
+		});
+		
+		btn_next.addSelectionListener(new SelectionAdapter()
+		{
+			public void widgetSelected(SelectionEvent e)
+			{
+				try
+				{
+					rsc.predict_next(p, q);
+					Display display = Display.getDefault();
+					Image image = new Image(display, rsc.getFilePath());
+					ImageData data = image.getImageData();
+					data = data.scaledTo(600, 600);
+					image = new Image(display, data);
+					lblNewLabel.setImage(image);
+					text_predict.setText(Double.toString(rsc.getPredict()));
+					text_real.setText(Double.toString(rsc.getReal()));
+				} catch (Exception ex)
+				{
+					System.out.println(ex.toString());
+				}
+			}
+		});
+		
+		btn_acf.addSelectionListener(new SelectionAdapter()
+		{
+			public void widgetSelected(SelectionEvent e)
+			{
+				try
+				{
+					rsc.acf(p, q);
+					Display display = Display.getDefault();
+					Image image = new Image(display, rsc.getFilePath());
+					ImageData data = image.getImageData();
+					data = data.scaledTo(600, 600);
+					image = new Image(display, data);
+					lblNewLabel.setImage(image);
+				} catch (Exception ex)
+				{
+					System.out.println(ex.toString());
+				}
+			}
+		});
+		
+		btn_pacf.addSelectionListener(new SelectionAdapter()
+		{
+			public void widgetSelected(SelectionEvent e)
+			{
+				try
+				{
+					rsc.pacf(p, q);
+					Display display = Display.getDefault();
+					Image image = new Image(display, rsc.getFilePath());
+					ImageData data = image.getImageData();
+					data = data.scaledTo(600, 600);
+					image = new Image(display, data);
+					lblNewLabel.setImage(image);
+				} catch (Exception ex)
+				{
+					System.out.println(ex.toString());
+				}
+			}
+		});
+		
+		btn_abs_acf.addSelectionListener(new SelectionAdapter()
+		{
+			public void widgetSelected(SelectionEvent e)
+			{
+				try
+				{
+					rsc.abs_acf(p, q);
+					Display display = Display.getDefault();
+					Image image = new Image(display, rsc.getFilePath());
+					ImageData data = image.getImageData();
+					data = data.scaledTo(600, 600);
+					image = new Image(display, data);
+					lblNewLabel.setImage(image);
+				} catch (Exception ex)
+				{
+					System.out.println(ex.toString());
+				}
+			}
+		});
+		
+		btn_abs_pacf.addSelectionListener(new SelectionAdapter()
+		{
+			public void widgetSelected(SelectionEvent e)
+			{
+				try
+				{
+					rsc.abs_pacf(p, q);
+					Display display = Display.getDefault();
+					Image image = new Image(display, rsc.getFilePath());
+					ImageData data = image.getImageData();
+					data = data.scaledTo(600, 600);
+					image = new Image(display, data);
+					lblNewLabel.setImage(image);
+				} catch (Exception ex)
+				{
+					System.out.println(ex.toString());
+				}
+			}
+		});
+		
+		btn_qq.addSelectionListener(new SelectionAdapter()
+		{
+			public void widgetSelected(SelectionEvent e)
+			{
+				try
+				{
+					rsc.qq(p, q);
+					Display display = Display.getDefault();
+					Image image = new Image(display, rsc.getFilePath());
+					ImageData data = image.getImageData();
+					data = data.scaledTo(600, 600);
+					image = new Image(display, data);
+					lblNewLabel.setImage(image);
+				} catch (Exception ex)
+				{
+					System.out.println(ex.toString());
+				}
+			}
+		});
+		
+		btn_res.addSelectionListener(new SelectionAdapter()
+		{
+			public void widgetSelected(SelectionEvent e)
+			{
+				try
+				{
+					rsc.res(p, q);
+					Display display = Display.getDefault();
+					Image image = new Image(display, rsc.getFilePath());
+					ImageData data = image.getImageData();
+					data = data.scaledTo(600, 600);
+					image = new Image(display, data);
+					lblNewLabel.setImage(image);
+				} catch (Exception ex)
+				{
+					System.out.println(ex.toString());
 				}
 			}
 		});
