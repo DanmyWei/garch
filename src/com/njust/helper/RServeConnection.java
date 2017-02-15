@@ -13,10 +13,15 @@ public class RServeConnection
 	private static int index;
 	private static String folderPath;
 	private static String filePath;
+	private static String outputFilePath;
+	private static String realDiffSD;
 	private static RConnection c = null;
 	private static String inputJsonName;
 	private static double t_predict;
 	private static double t_real;
+	private static int base = 100;// 拟合起点
+	private static int learnstep = 3600;// 拟合长度
+	private static int prestep = 10;// 每30步计算一次方差
 
 	public RServeConnection()
 	{
@@ -91,17 +96,13 @@ public class RServeConnection
 
 		try
 		{
-			int base = 100;// 拟合起点
-			int learnstep = 360;// 拟合长度
-			int prestep = 360;
-
 			c.eval("base<-" + String.valueOf(base));
 			c.eval("learnstep<-" + String.valueOf(learnstep));
 			c.eval("flag<-base+learnstep");
 			c.eval("prestep<-" + String.valueOf(prestep));
 			c.eval("temp<-f[base:(base+learnstep)]");// 原始数据
 			c.eval("d<-diff(log(temp))*100");// 差分
-			c.eval("prepart<-f[(base+learnstep+1):(base+learnstep+prestep)]");// 观测值
+			c.eval("prepart<-f[(flag+1):(flag+prestep)]");// 观测值
 
 			c.eval("m1=garch(x=d,order=c(" + p + "," + q + "))");// 拟合garch模型
 			// c.eval("g1 = garchFit(formula=~garch(" + p + "," + q +
@@ -122,19 +123,32 @@ public class RServeConnection
 	{
 		filePath = folderPath + "Predict-garch(" + p + "," + q + ")-"
 				+ inputJsonName + ".jpg";
+		outputFilePath = folderPath + "output/Predict-garch(" + p + "," + q
+				+ ")-" + inputJsonName + ".json";
 		try
 		{
-			t_predict = c.eval("m1$coef[1]/(1-m1$coef[2]-m1$coef[3])")
-					.asDouble();// 预测平均方差
-			t_real = c.eval("sd(diff(log(prepart))*100)^2").asDouble();// 实际方差
-			t_predict = (double)(Math.round(t_predict*100)/100.0);
-			t_real = (double)(Math.round(t_real*100)/100.0);
-			System.out.println("t_predict=" + t_predict + ",t_real=" + t_real);
+			// t_predict = c.eval("m1$coef[1]/(1-m1$coef[2]-m1$coef[3])")
+			// .asDouble();// 预测平均方差
+			// t_real = c.eval("sd(diff(log(prepart))*100)^2").asDouble();//
+			// 实际方差
+			// t_predict = (double) (Math.round(t_predict * 100) / 100.0);
+			// t_real = (double) (Math.round(t_real * 100) / 100.0);
+			// System.out.println("t_predict=" + t_predict + ",t_real=" +
+			// t_real);
 			c.eval("jpeg('" + filePath + "')");
 			// c.eval("plot(predict(g1,n.ahead=prestep)$standardDeviation,type='b',ylab = 'standardDeviation')");
 			// c.eval("abline(h=coef(predict(g1,n.ahead=prestep)$meanError))");
 			c.eval("plot((fitted(m1)[,1])^2,type='l',ylab='Conditional Variance',xlab='t')");
 			c.eval("dev.off()");
+			ArrayList predict_list = new ArrayList();
+			double[] data = c.eval("(fitted(m1)[,1])^2").asDoubles();
+			for (int i = 0; i < data.length; i++)
+				predict_list.add(new Double(data[i]));
+			JsonFileHelper predict_json = new JsonFileHelper();
+			if (predict_json.SavetoJson(predict_list, outputFilePath))
+				System.out.println("预测数据写入成功 : " + outputFilePath);
+			else
+				System.out.println("预测数据写入失败 : " + outputFilePath);
 		} catch (Exception exception)
 		{
 			System.out.println(exception.toString());
@@ -142,23 +156,33 @@ public class RServeConnection
 		}
 	}
 
-	public void predict_next(int p, int q)
+	public void predict_real(int p, int q)
 	{
-		filePath = folderPath + "Predict-garch(" + p + "," + q + ")-"
-				+ inputJsonName + ".jpg";
+		filePath = folderPath + "real/realDiff-" + inputJsonName + ".jpg";
+		realDiffSD = folderPath + "real/realDiff-" + inputJsonName + ".json";
+		int max = learnstep / prestep;
+		ArrayList real_list = new ArrayList();
 		try
 		{
-			c.eval("flag<-flag+30");
-			c.eval("prepart<-f[(flag+1):(flag+prestep)]");// 观测值
-			t_real = c.eval("sd(diff(log(prepart))*100)^2").asDouble();// 实际方差
+			c.eval("flag<-base+learnstep");
+			for (int i = 0; i < max; i++)
+			{
+				c.eval("prepart<-f[(flag+1):(flag+prestep)]");// 观测值
+				t_real = c.eval("sd(diff(log(prepart))*100)^2").asDouble();// 实际方差
+				real_list.add(new Double(t_real));
+				c.eval("flag<-flag+prestep");
+			}
+			JsonFileHelper real_json = new JsonFileHelper();
+			if (real_json.SavetoJson(real_list, realDiffSD))
+				System.out.println("预测数据写入成功 : " + realDiffSD);
+			else
+				System.out.println("预测数据写入失败 : " + realDiffSD);
+			c.eval("json_real<-fromJSON(paste(readLines('" + realDiffSD
+					+ "'), collapse=''))");
+			c.eval("source('D:/workspace/garch/test/timeseriesanalysis/real.R')");
 			c.eval("jpeg('" + filePath + "')");
-			// c.eval("plot(predict(g1,n.ahead=prestep)$standardDeviation,type='b',ylab = 'standardDeviation')");
-			// c.eval("abline(h=coef(predict(g1,n.ahead=prestep)$meanError))");
-			c.eval("plot(" + t_real + ")");
-			c.eval("abline(h=" + t_predict + ")");
+			c.eval("plot(rf,type='l')");
 			c.eval("dev.off()");
-			t_real = (double)(Math.round(t_real*100)/100.0);
-			System.out.println("t_predict=" + t_predict + ",t_real=" + t_real);
 		} catch (Exception exception)
 		{
 			System.out.println(exception.toString());

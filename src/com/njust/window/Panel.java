@@ -119,7 +119,7 @@ public class Panel
 		text_p.setBounds(453, 655, 16, 23);
 		
 		Button btn_predict = new Button(shell, SWT.NONE);
-		btn_predict.setText("预测");
+		btn_predict.setText("拟合方差值");
 		btn_predict.setBounds(531, 760, 80, 27);
 		
         final RServeConnection rsc = new RServeConnection();
@@ -163,9 +163,9 @@ public class Panel
 		btn_res.setText("标准残差");
 		btn_res.setBounds(108, 760, 80, 27);
 		
-		Button btn_next = new Button(shell, SWT.NONE);
-		btn_next.setText("下一步长");
-		btn_next.setBounds(531, 711, 80, 27);
+		Button btn_real = new Button(shell, SWT.NONE);
+		btn_real.setText("观测方差值");
+		btn_real.setBounds(531, 711, 80, 27);
 		
 		Label label_3 = new Label(shell, SWT.NONE);
 		label_3.setText("拟合方差平均值:");
@@ -264,8 +264,8 @@ public class Panel
 					data = data.scaledTo(600, 600);
 					image = new Image(display, data);
 					lblNewLabel.setImage(image);
-					text_predict.setText(Double.toString(rsc.getPredict()));
-					text_real.setText(Double.toString(rsc.getReal()));
+//					text_predict.setText(Double.toString(rsc.getPredict()));
+//					text_real.setText(Double.toString(rsc.getReal()));
 				} catch (Exception ex)
 				{
 					System.out.println(ex.toString());
@@ -273,21 +273,21 @@ public class Panel
 			}
 		});
 		
-		btn_next.addSelectionListener(new SelectionAdapter()
+		btn_real.addSelectionListener(new SelectionAdapter()
 		{
 			public void widgetSelected(SelectionEvent e)
 			{
 				try
 				{
-					rsc.predict_next(p, q);
+					rsc.predict_real(p, q);
 					Display display = Display.getDefault();
 					Image image = new Image(display, rsc.getFilePath());
 					ImageData data = image.getImageData();
 					data = data.scaledTo(600, 600);
 					image = new Image(display, data);
 					lblNewLabel.setImage(image);
-					text_predict.setText(Double.toString(rsc.getPredict()));
-					text_real.setText(Double.toString(rsc.getReal()));
+//					text_predict.setText(Double.toString(rsc.getPredict()));
+//					text_real.setText(Double.toString(rsc.getReal()));
 				} catch (Exception ex)
 				{
 					System.out.println(ex.toString());
