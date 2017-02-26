@@ -16,9 +16,7 @@ plot(residuals(garchmod),type='l',ylab = 'Standard residual')
 
 difflog<-diff(log(temp))*100
 
-g1 = garchFit(formula=~garch(1,1),data=temp,trace=F,cond.dist="std")
-
-g2 = garchFit(formula=~garch(1,1),data=difflog,trace=F,cond.dist="std")
+g1 = garchFit(formula=~garch(1,1),data=difflog,trace=F,cond.dist="std")
 
 plot(predict(g1,n.ahead=100)$meanError,type='b')
 
@@ -33,3 +31,17 @@ qqline(residuals(m1))
 m1$coef[1]/(1-m1$coef[2]-m1$coef[3])
 
 sd(diff(log(prepart))*100)^2
+
+
+#向前一步预测
+p1 = m1$coef[1] + m1$coef[2] * difflog[learnstep]^2 + m1$coef[3] * sd(difflog)^2
+
+p2 = m1$coef[1] + m1$coef[2] * p1 + m1$coef[3] * p1
+
+p3 =  m1$coef[1] + m1$coef[2] * p2 + m1$coef[3] * p2
+
+p4 =  m1$coef[1] + m1$coef[2] * p3 + m1$coef[3] * p3
+
+p5 =  m1$coef[1] + m1$coef[2] * p4 + m1$coef[3] * p4
+
+p6 =  m1$coef[1] + m1$coef[2] * p5 + m1$coef[3] * p5

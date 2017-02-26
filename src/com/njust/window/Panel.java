@@ -28,6 +28,8 @@ public class Panel
 	private Text text_real;
 	private int p = 1;
 	private int q = 1;
+	private int k = 1;
+	private Text text_long;
 
 	/**
 	 * Launch the application.
@@ -119,8 +121,8 @@ public class Panel
 		text_p.setBounds(453, 655, 16, 23);
 		
 		Button btn_predict = new Button(shell, SWT.NONE);
-		btn_predict.setText("拟合方差值");
-		btn_predict.setBounds(531, 760, 80, 27);
+		btn_predict.setText("向前预测");
+		btn_predict.setBounds(531, 745, 80, 27);
 		
         final RServeConnection rsc = new RServeConnection();
         rsc.setFolderPath("D", "R-Data");
@@ -164,34 +166,48 @@ public class Panel
 		btn_res.setBounds(108, 760, 80, 27);
 		
 		Button btn_real = new Button(shell, SWT.NONE);
-		btn_real.setText("观测方差值");
-		btn_real.setBounds(531, 711, 80, 27);
+		btn_real.setText("1步序列校验");
+		btn_real.setBounds(531, 712, 80, 27);
 		
 		Label lblaic = new Label(shell, SWT.NONE);
 		lblaic.setText("拟合模型AIC值:");
 		lblaic.setFont(SWTResourceManager.getFont("Microsoft YaHei UI", 11, SWT.NORMAL));
 		lblaic.setAlignment(SWT.RIGHT);
-		lblaic.setBounds(280, 729, 119, 23);
+		lblaic.setBounds(280, 727, 119, 23);
 		
 		text_aic = new Text(shell, SWT.WRAP);
 		text_aic.setText("");
-		text_aic.setBounds(405, 732, 87, 17);
+		text_aic.setBounds(405, 730, 87, 17);
 		
-		Label label_4 = new Label(shell, SWT.NONE);
-		label_4.setText("实际观测方差值:");
+		final Label label_4 = new Label(shell, SWT.NONE);
+		label_4.setText("向前1步预测值:");
 		label_4.setFont(SWTResourceManager.getFont("Microsoft YaHei UI", 11, SWT.NORMAL));
 		label_4.setAlignment(SWT.RIGHT);
-		label_4.setBounds(278, 764, 121, 23);
+		label_4.setBounds(278, 753, 121, 23);
 		
 		text_real = new Text(shell, SWT.WRAP);
 		text_real.setText("");
-		text_real.setBounds(405, 766, 87, 17);
+		text_real.setBounds(405, 755, 87, 17);
 		
 		Label label_1 = new Label(shell, SWT.BORDER | SWT.CENTER);
 		label_1.setText("模型诊断");
 		label_1.setFont(SWTResourceManager.getFont("Microsoft YaHei UI", 14, SWT.NORMAL));
 		label_1.setAlignment(SWT.CENTER);
 		label_1.setBounds(10, 660, 189, 145);
+		
+		Button btn_next = new Button(shell, SWT.NONE);
+		btn_next.setText("下一步");
+		btn_next.setBounds(531, 778, 80, 27);
+		
+		Label label_3 = new Label(shell, SWT.NONE);
+		label_3.setText("拟合长期方差:");
+		label_3.setFont(SWTResourceManager.getFont("Microsoft YaHei UI", 11, SWT.NORMAL));
+		label_3.setAlignment(SWT.RIGHT);
+		label_3.setBounds(278, 776, 121, 23);
+		
+		text_long = new Text(shell, SWT.WRAP);
+		text_long.setText("");
+		text_long.setBounds(405, 778, 87, 17);
 		
 		Label label_2 = new Label(shell, SWT.BORDER | SWT.CENTER);
 		label_2.setText("预测分析");
@@ -217,6 +233,7 @@ public class Panel
 					image = new Image(display, data);
 					lblNewLabel.setImage(image);
 					text_aic.setText(Double.toString(rsc.getAIC()));
+					text_long.setText(Double.toString(rsc.getLong()));
 				} catch (Exception ex)
 				{
 					System.out.println(ex.toString());
@@ -258,15 +275,26 @@ public class Panel
 			{
 				try
 				{
-					rsc.predict(p, q);
-					Display display = Display.getDefault();
-					Image image = new Image(display, rsc.getFilePath());
-					ImageData data = image.getImageData();
-					data = data.scaledTo(600, 600);
-					image = new Image(display, data);
-					lblNewLabel.setImage(image);
-//					text_predict.setText(Double.toString(rsc.getPredict()));
-//					text_real.setText(Double.toString(rsc.getReal()));
+					k = 1;
+					label_4.setText("向前" + k + "步预测值:");
+					rsc.predict(p, q, k);
+					text_real.setText(Double.toString(rsc.getPredict()));
+				} catch (Exception ex)
+				{
+					System.out.println(ex.toString());
+				}
+			}
+		});
+		
+		btn_next.addSelectionListener(new SelectionAdapter()
+		{
+			public void widgetSelected(SelectionEvent e)
+			{
+				try
+				{
+					label_4.setText("向前" + ++k + "步预测值:");
+					rsc.predict(p, q, k);
+					text_real.setText(Double.toString(rsc.getPredict()));
 				} catch (Exception ex)
 				{
 					System.out.println(ex.toString());
