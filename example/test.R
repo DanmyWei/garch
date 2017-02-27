@@ -27,9 +27,10 @@ m1=garch(d,order=c(1,1))
 summary(m1)
 
 #图形分析
-plot(residuals(m1),type='h')
-qqnorm(residuals(m1))
-qqline(residuals(m1))
+#plot(residuals(m1),type='h')
+#qqnorm(residuals(m1))
+#qqline(residuals(m1))
+plot((fitted(m1)[,1])^2,col='blue',type='l',ylab='Conditional Variance',ylim=c(0,5000),xlab='t')
 
 #长期方差预测
 long = m1$coef[1]/(1-m1$coef[2]-m1$coef[3])
