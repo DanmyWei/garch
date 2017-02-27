@@ -1,47 +1,43 @@
+#加载库
 library(TSA)
 library(rjson)
+
+#数据载入
 json_data<-fromJSON(paste(readLines('D:/R-Data/SpotData/c4.2xlarge-spotprice_us-east-1d.json'), collapse=''))
+#预处理
 source("D:/workspace/garch/test/timeseriesanalysis/ParseSpotScript.R")
 base<-100
-learnstep<-3600
-prestep<-100
+learnstep<-360
+prestep<-30
 temp<-f[base:(base+learnstep)]
 prepart<-f[(base+learnstep+1):(base+learnstep+prestep)]
-predicted=100
 
+#fGarch库测试
+#library(fGarch)
+#predicted=100
+#garchmod=garch(x=temp,order=c(1,1))
+#plot(residuals(garchmod),type='l',ylab = 'Standard residual')
+#g1 = garchFit(formula=~garch(1,1),data=difflog,trace=F,cond.dist="std")
+#plot(predict(g1,n.ahead=100)$meanError,type='b')
+#plot(predict(g2,n.ahead=100)$standardDeviation,type='b')
 
-garchmod=garch(x=temp,order=c(1,1))
-
-plot(residuals(garchmod),type='l',ylab = 'Standard residual')
-
-difflog<-diff(log(temp))*100
-
-g1 = garchFit(formula=~garch(1,1),data=difflog,trace=F,cond.dist="std")
-
-plot(predict(g1,n.ahead=100)$meanError,type='b')
-
-plot(predict(g2,n.ahead=100)$standardDeviation,type='b')
-
-m1=garch(difflog,order=c(1,1))
+#差分建模
+d<-diff(log(temp))*100
+m1=garch(d,order=c(1,1))
 summary(m1)
+
+#图形分析
 plot(residuals(m1),type='h')
 qqnorm(residuals(m1))
 qqline(residuals(m1))
 
-m1$coef[1]/(1-m1$coef[2]-m1$coef[3])
+#长期方差预测
+long = m1$coef[1]/(1-m1$coef[2]-m1$coef[3])
+long
 
-sd(diff(log(prepart))*100)^2
-
-
-#向前一步预测
-p1 = m1$coef[1] + m1$coef[2] * difflog[learnstep]^2 + m1$coef[3] * sd(difflog)^2
-
-p2 = m1$coef[1] + m1$coef[2] * p1 + m1$coef[3] * p1
-
-p3 =  m1$coef[1] + m1$coef[2] * p2 + m1$coef[3] * p2
-
-p4 =  m1$coef[1] + m1$coef[2] * p3 + m1$coef[3] * p3
-
-p5 =  m1$coef[1] + m1$coef[2] * p4 + m1$coef[3] * p4
-
-p6 =  m1$coef[1] + m1$coef[2] * p5 + m1$coef[3] * p5
+#条件方差向前一步预测
+p = m1$coef[1] + m1$coef[2] * d[learnstep]^2 + m1$coef[3] * sd(d)^2
+p
+#条件方差向前多步预测
+p = m1$coef[1] + m1$coef[2] * p + m1$coef[3] * p
+p
