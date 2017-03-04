@@ -11,7 +11,7 @@ import javax.json.stream.JsonGenerator;
 
 public class JsonFileHelper
 {
-	public static boolean SavetoJson(ArrayList data, String outputfilename)
+	public static boolean SavetoJson(ArrayList data, String outputfilename, String sd)
 	{
 		File outputfile = new File(outputfilename);
 		if (!outputfile.exists())
@@ -46,7 +46,7 @@ public class JsonFileHelper
 			for (int i = 0; i < data.size(); i++)
 			{
 				generator.writeStartObject();
-				generator.write("sd", String.valueOf(data.get(i)));
+				generator.write(sd, String.valueOf(data.get(i)));
 				generator.writeEnd();
 			}
 			generator.writeEnd();

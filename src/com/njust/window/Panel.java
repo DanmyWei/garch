@@ -79,7 +79,7 @@ public class Panel
 		shell = new Shell();
 		shell.setSize(634, 854);
 		shell.setText("基于GARCH（异方差时间序列模型）的价格预测");
-		
+
 		Button btn_gbox = new Button(shell, SWT.NONE);
 		btn_gbox.setText("p值检验");
 		btn_gbox.setBounds(108, 727, 80, 27);
@@ -119,102 +119,107 @@ public class Panel
 		text_p = new Text(shell, SWT.BORDER);
 		text_p.setText("1");
 		text_p.setBounds(453, 655, 16, 23);
-		
+
 		Button btn_predict = new Button(shell, SWT.NONE);
 		btn_predict.setText("向前预测");
 		btn_predict.setBounds(531, 745, 80, 27);
-		
-        final RServeConnection rsc = new RServeConnection();
-        rsc.setFolderPath("D", "R-Data");
-        
+
+		final RServeConnection rsc = new RServeConnection();
+		rsc.setFolderPath("D", "R-Data");
+
 		Label lblP = new Label(shell, SWT.NONE);
 		lblP.setText("p=");
 		lblP.setAlignment(SWT.RIGHT);
 		lblP.setBounds(430, 658, 17, 23);
-		
+
 		Display display = Display.getDefault();
 		Image image = new Image(display, "D://R-Data/wallpaper.jpg");
 		ImageData data = image.getImageData();
 		data = data.scaledTo(600, 600);
 		image = new Image(display, data);
 		lblNewLabel.setImage(image);
-		
+
 		Label lblGarchpq = new Label(shell, SWT.NONE);
 		lblGarchpq.setText("garch(p,q)模型参数:");
-		lblGarchpq.setFont(SWTResourceManager.getFont("Microsoft YaHei UI", 11, SWT.NORMAL));
+		lblGarchpq.setFont(SWTResourceManager.getFont("Microsoft YaHei UI", 11,
+				SWT.NORMAL));
 		lblGarchpq.setAlignment(SWT.RIGHT);
 		lblGarchpq.setBounds(270, 655, 154, 23);
-		
+
 		Button btn_acf = new Button(shell, SWT.NONE);
 		btn_acf.setText("ACF图");
 		btn_acf.setBounds(22, 694, 80, 27);
-		
+
 		Button btn_pacf = new Button(shell, SWT.NONE);
 		btn_pacf.setText("PACF图");
 		btn_pacf.setBounds(108, 694, 80, 27);
-		
+
 		Button btn_abs_acf = new Button(shell, SWT.NONE);
 		btn_abs_acf.setText("ABS(ACF)图");
 		btn_abs_acf.setBounds(22, 727, 80, 27);
-		
+
 		Button btn_qq = new Button(shell, SWT.NONE);
 		btn_qq.setText("残差QQ图");
 		btn_qq.setBounds(22, 760, 80, 27);
-		
+
 		Button btn_res = new Button(shell, SWT.NONE);
 		btn_res.setText("标准残差");
 		btn_res.setBounds(108, 760, 80, 27);
-		
+
 		Button btn_real = new Button(shell, SWT.NONE);
 		btn_real.setText("1步序列校验");
 		btn_real.setBounds(531, 712, 80, 27);
-		
+
 		Label lblaic = new Label(shell, SWT.NONE);
 		lblaic.setText("拟合模型AIC值:");
-		lblaic.setFont(SWTResourceManager.getFont("Microsoft YaHei UI", 11, SWT.NORMAL));
+		lblaic.setFont(SWTResourceManager.getFont("Microsoft YaHei UI", 11,
+				SWT.NORMAL));
 		lblaic.setAlignment(SWT.RIGHT);
 		lblaic.setBounds(280, 727, 119, 23);
-		
+
 		text_aic = new Text(shell, SWT.WRAP);
 		text_aic.setText("");
 		text_aic.setBounds(405, 730, 87, 17);
-		
+
 		final Label label_4 = new Label(shell, SWT.NONE);
 		label_4.setText("向前1步预测值:");
-		label_4.setFont(SWTResourceManager.getFont("Microsoft YaHei UI", 11, SWT.NORMAL));
+		label_4.setFont(SWTResourceManager.getFont("Microsoft YaHei UI", 11,
+				SWT.NORMAL));
 		label_4.setAlignment(SWT.RIGHT);
 		label_4.setBounds(278, 753, 121, 23);
-		
+
 		text_real = new Text(shell, SWT.WRAP);
 		text_real.setText("");
 		text_real.setBounds(405, 755, 87, 17);
-		
+
 		Label label_1 = new Label(shell, SWT.BORDER | SWT.CENTER);
 		label_1.setText("模型诊断");
-		label_1.setFont(SWTResourceManager.getFont("Microsoft YaHei UI", 14, SWT.NORMAL));
+		label_1.setFont(SWTResourceManager.getFont("Microsoft YaHei UI", 14,
+				SWT.NORMAL));
 		label_1.setAlignment(SWT.CENTER);
 		label_1.setBounds(10, 660, 189, 145);
-		
+
 		Button btn_next = new Button(shell, SWT.NONE);
 		btn_next.setText("下一步");
 		btn_next.setBounds(531, 778, 80, 27);
-		
+
 		Label label_3 = new Label(shell, SWT.NONE);
 		label_3.setText("拟合长期方差:");
-		label_3.setFont(SWTResourceManager.getFont("Microsoft YaHei UI", 11, SWT.NORMAL));
+		label_3.setFont(SWTResourceManager.getFont("Microsoft YaHei UI", 11,
+				SWT.NORMAL));
 		label_3.setAlignment(SWT.RIGHT);
 		label_3.setBounds(278, 776, 121, 23);
-		
+
 		text_long = new Text(shell, SWT.WRAP);
 		text_long.setText("");
 		text_long.setBounds(405, 778, 87, 17);
-		
+
 		Label label_2 = new Label(shell, SWT.BORDER | SWT.CENTER);
 		label_2.setText("预测分析");
-		label_2.setFont(SWTResourceManager.getFont("Microsoft YaHei UI", 14, SWT.NORMAL));
+		label_2.setFont(SWTResourceManager.getFont("Microsoft YaHei UI", 14,
+				SWT.NORMAL));
 		label_2.setAlignment(SWT.CENTER);
 		label_2.setBounds(270, 691, 244, 114);
-
 
 		btn_build.addSelectionListener(new SelectionAdapter()
 		{
@@ -222,6 +227,8 @@ public class Panel
 			{
 				try
 				{
+					k = 1;
+					label_4.setText("向前" + k + "步预测值:");
 					p = Integer.valueOf(text_p.getText()).intValue();
 					q = Integer.valueOf(text_q.getText()).intValue();
 					rsc.read(inputFilePath, inputFileName);
@@ -232,8 +239,15 @@ public class Panel
 					data = data.scaledTo(600, 600);
 					image = new Image(display, data);
 					lblNewLabel.setImage(image);
-					text_aic.setText(Double.toString(rsc.getAIC()));
-					text_long.setText(Double.toString(rsc.getLong()));
+					double aic_value = rsc.getAIC();
+					double long_value = rsc.getLong();
+					text_aic.setText(Double.toString(aic_value));
+					if (long_value > 0)
+					{
+						text_long.setText(Double.toString(long_value));
+					}
+					else
+						text_long.setText("模型条件不符");
 				} catch (Exception ex)
 				{
 					System.out.println(ex.toString());
@@ -268,7 +282,7 @@ public class Panel
 				}
 			}
 		});
-		
+
 		btn_predict.addSelectionListener(new SelectionAdapter()
 		{
 			public void widgetSelected(SelectionEvent e)
@@ -279,13 +293,20 @@ public class Panel
 					label_4.setText("向前" + k + "步预测值:");
 					rsc.predict(p, q, k);
 					text_real.setText(Double.toString(rsc.getPredict()));
+					
+					Display display = Display.getDefault();
+					Image image = new Image(display, rsc.getFilePath());
+					ImageData data = image.getImageData();
+					data = data.scaledTo(600, 600);
+					image = new Image(display, data);
+					lblNewLabel.setImage(image);
 				} catch (Exception ex)
 				{
 					System.out.println(ex.toString());
 				}
 			}
 		});
-		
+
 		btn_next.addSelectionListener(new SelectionAdapter()
 		{
 			public void widgetSelected(SelectionEvent e)
@@ -295,13 +316,20 @@ public class Panel
 					label_4.setText("向前" + ++k + "步预测值:");
 					rsc.predict(p, q, k);
 					text_real.setText(Double.toString(rsc.getPredict()));
+					
+					Display display = Display.getDefault();
+					Image image = new Image(display, rsc.getFilePath());
+					ImageData data = image.getImageData();
+					data = data.scaledTo(600, 600);
+					image = new Image(display, data);
+					lblNewLabel.setImage(image);
 				} catch (Exception ex)
 				{
 					System.out.println(ex.toString());
 				}
 			}
 		});
-		
+
 		btn_real.addSelectionListener(new SelectionAdapter()
 		{
 			public void widgetSelected(SelectionEvent e)
@@ -315,15 +343,15 @@ public class Panel
 					data = data.scaledTo(600, 600);
 					image = new Image(display, data);
 					lblNewLabel.setImage(image);
-//					text_predict.setText(Double.toString(rsc.getPredict()));
-//					text_real.setText(Double.toString(rsc.getReal()));
+					// text_predict.setText(Double.toString(rsc.getPredict()));
+					// text_real.setText(Double.toString(rsc.getReal()));
 				} catch (Exception ex)
 				{
 					System.out.println(ex.toString());
 				}
 			}
 		});
-		
+
 		btn_acf.addSelectionListener(new SelectionAdapter()
 		{
 			public void widgetSelected(SelectionEvent e)
@@ -343,7 +371,7 @@ public class Panel
 				}
 			}
 		});
-		
+
 		btn_pacf.addSelectionListener(new SelectionAdapter()
 		{
 			public void widgetSelected(SelectionEvent e)
@@ -363,7 +391,7 @@ public class Panel
 				}
 			}
 		});
-		
+
 		btn_abs_acf.addSelectionListener(new SelectionAdapter()
 		{
 			public void widgetSelected(SelectionEvent e)
@@ -383,7 +411,7 @@ public class Panel
 				}
 			}
 		});
-		
+
 		btn_gbox.addSelectionListener(new SelectionAdapter()
 		{
 			public void widgetSelected(SelectionEvent e)
@@ -403,7 +431,7 @@ public class Panel
 				}
 			}
 		});
-		
+
 		btn_qq.addSelectionListener(new SelectionAdapter()
 		{
 			public void widgetSelected(SelectionEvent e)
@@ -423,7 +451,7 @@ public class Panel
 				}
 			}
 		});
-		
+
 		btn_res.addSelectionListener(new SelectionAdapter()
 		{
 			public void widgetSelected(SelectionEvent e)

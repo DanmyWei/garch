@@ -17,12 +17,15 @@ public class RServeConnection
 	private static String realDiffSD;
 	private static RConnection c = null;
 	private static String inputJsonName;
+	private static String predictPath;
 	private static double t_predict;
 	private static double t_long;
 	private static int base = 100;// 拟合起点
 	private static int learnstep = 360;// 拟合长度
-	private static int prestep = 36;//取样间隔
+	private static int prestep = 10;// 取样间隔
 	private static double aic;
+	private static ArrayList predict_list;// 向前预测序列
+	private static ArrayList real2_list;
 
 	public RServeConnection()
 	{
@@ -42,12 +45,14 @@ public class RServeConnection
 
 	public double getPredict()
 	{
-		return (double) (Math.round(t_predict * 100) / 100.0);
+		// return (double) (Math.round(t_predict * 100) / 100.0);
+		return t_predict;
 	}
 
 	public double getLong()
 	{
-		return (double) (Math.round(t_long * 100) / 100.0);
+		// return (double) (Math.round(t_long * 100) / 100.0);
+		return t_long;
 	}
 
 	public void setPredict(double t)
@@ -59,7 +64,7 @@ public class RServeConnection
 	{
 		t_long = t;
 	}
-	
+
 	public void setAIC(double t)
 	{
 		aic = t;
@@ -73,13 +78,19 @@ public class RServeConnection
 	public void start() throws RserveException
 	{
 		if (c == null || !c.isConnected())
+		{
 			c = new RConnection();
+			System.out.println("RServer连接成功");
+		}
 	}
 
 	public void end() throws RserveException
 	{
 		if (c.isConnected())
+		{
 			c.close();
+			System.out.println("已关闭RServer连接");
+		}
 	}
 
 	// 读取数据和加载库
@@ -104,7 +115,8 @@ public class RServeConnection
 	{
 		filePath = folderPath + "Standard-residual-garch(" + p + "," + q + ")-"
 				+ inputJsonName + ".jpg";
-
+		predict_list = new ArrayList();
+		real2_list = new ArrayList();
 		try
 		{
 			c.eval("base<-" + String.valueOf(base));
@@ -114,6 +126,7 @@ public class RServeConnection
 			c.eval("temp<-f[base:(base+learnstep)]");// 原始数据
 			c.eval("d<-diff(log(temp))*100");// 差分
 			c.eval("prepart<-f[(flag+1):(flag+prestep)]");// 观测值
+			c.eval("presteppart<-f[(flag+1):(flag+learnstep)]");// 步长级观测值
 
 			c.eval("m1=garch(x=d,order=c(" + p + "," + q + "))");// 拟合garch模型
 			// c.eval("g1 = garchFit(formula=~garch(" + p + "," + q +
@@ -125,6 +138,7 @@ public class RServeConnection
 			c.eval("dev.off()");
 			setAIC(c.eval("AIC(m1)").asDouble());
 			setLong(c.eval("m1$coef[1]/(1-m1$coef[2]-m1$coef[3])").asDouble());
+			System.out.println("拟合长期方差值=" + getLong());
 		} catch (Exception exception)
 		{
 			System.out.println(exception.toString());
@@ -135,20 +149,59 @@ public class RServeConnection
 	public void predict(int p, int q, int k)
 	{
 		double value;
+		filePath = folderPath + "predict/predict-" + inputJsonName + ".jpg";
+		predictPath = folderPath + "predict/predict-" + inputJsonName + ".json";
+		realDiffSD = folderPath + "real/realPredict-" + inputJsonName + ".json";
 		try
 		{
-			if(k<=1)
+			if (k <= 1)
 			{
+				predict_list.clear();
 				c.eval("p = m1$coef[1] + m1$coef[2] * d[learnstep]^2 + m1$coef[3] * sd(d)^2");
 				value = c.eval("p").asDouble();
+				predict_list.add(new Double(value));
 				setPredict(value);
-			}
-			else
+			} else
 			{
 				c.eval("p = m1$coef[1] + m1$coef[2] * p + m1$coef[3] * p");
 				value = c.eval("p").asDouble();
+				predict_list.add(new Double(value));
 				setPredict(value);
 			}
+			JsonFileHelper predict_json = new JsonFileHelper();
+			JsonFileHelper real_json = new JsonFileHelper();
+			double t_real;
+			real2_list.clear();
+			if (predict_json.SavetoJson(predict_list, predictPath, "pd"))
+			{
+				System.out.println(k + "步预测数据写入成功 : " + predictPath);
+				
+				c.eval("flag2<-base+learnstep");
+				for (int i = 0; i < k; i++)
+				{
+					c.eval("presteppart<-f[(flag2+1):(flag2+learnstep)]");// 步长级观测值
+					t_real = c.eval("sd(diff(log(presteppart))*100)^2").asDouble();// 方差
+					real2_list.add(new Double(t_real));
+					c.eval("flag2<-flag2+learnstep");
+				}
+				real_json.SavetoJson(real2_list, realDiffSD, "sd");
+				
+				c.eval("json_predict<-fromJSON(paste(readLines('" + predictPath
+						+ "'), collapse=''))");
+				c.eval("json_real<-fromJSON(paste(readLines('" + realDiffSD
+						+ "'), collapse=''))");
+				c.eval("source('D:/workspace/garch/test/timeseriesanalysis/real2.R')");
+				c.eval("source('D:/workspace/garch/test/timeseriesanalysis/predict.R')");
+				c.eval("h<-max(max(as.double(pf)),max(as.double(rf2)))");
+				c.eval("jpeg('" + filePath + "')");
+				c.eval("plot(pf,type='o',col='red',ylim=c(0,h))");
+				c.eval("par(new=TRUE)");
+				c.eval("plot(rf2,type='o',col='green',axes = FALSE,ylim=c(0,h))");
+				c.eval("dev.off()");
+			}
+			else
+				System.out.println(k + "步预测数据写入失败 : " + predictPath);
+			
 		} catch (Exception exception)
 		{
 			System.out.println(exception.toString());
@@ -176,25 +229,27 @@ public class RServeConnection
 				c.eval("flag<-flag+prestep");
 			}
 			JsonFileHelper real_json = new JsonFileHelper();
-			if (real_json.SavetoJson(real_list, realDiffSD))
+			if (real_json.SavetoJson(real_list, realDiffSD, "sd"))
 				System.out.println("观测数据写入成功 : " + realDiffSD);
 			else
 				System.out.println("观测数据写入失败 : " + realDiffSD);
 			c.eval("json_real<-fromJSON(paste(readLines('" + realDiffSD
 					+ "'), collapse=''))");
 			c.eval("source('D:/workspace/garch/test/timeseriesanalysis/real.R')");
+			c.eval("fm1<-(fitted(m1)[,1])^2");
+			c.eval("h<-max(max(as.double(rf)),max(fm1[2:learnstep]))");
 			c.eval("jpeg('" + filePath + "')");
-			c.eval("plot((fitted(m1)[,1])^2,col='red',type='l',ylab='Conditional Variance',ylim=c(0,5000),xlab='t')");//拟合值
+			c.eval("plot(fm1,col='red',type='l',ylab='Conditional Variance',ylim=c(0,h),xlab='t')");// 拟合值
 			c.eval("par(new=TRUE)");
-			c.eval("plot(rf,type='l',ylab='Conditional Variance',ylim=c(0,5000),axes = FALSE,xlab='t')");
+			c.eval("plot(rf,type='l',col='green',ylab='Conditional Variance',ylim=c(0,h),axes = FALSE,xlab='t')");
 			c.eval("dev.off()");
-			
+
 			ArrayList predict_list = new ArrayList();
 			double[] data = c.eval("(fitted(m1)[,1])^2").asDoubles();
 			for (int i = 0; i < data.length; i++)
 				predict_list.add(new Double(data[i]));
 			JsonFileHelper predict_json = new JsonFileHelper();
-			if (predict_json.SavetoJson(predict_list, outputFilePath))
+			if (predict_json.SavetoJson(predict_list, outputFilePath, "sd"))
 				System.out.println("预测数据写入成功 : " + outputFilePath);
 			else
 				System.out.println("预测数据写入失败 : " + outputFilePath);
