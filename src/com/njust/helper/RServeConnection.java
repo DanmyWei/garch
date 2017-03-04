@@ -25,6 +25,7 @@ public class RServeConnection
 	private static int prestep = 10;// 取样间隔
 	private static double aic;
 	private static ArrayList predict_list;// 向前预测序列
+	private static ArrayList real_list;
 	private static ArrayList real2_list;
 
 	public RServeConnection()
@@ -116,6 +117,7 @@ public class RServeConnection
 		filePath = folderPath + "Standard-residual-garch(" + p + "," + q + ")-"
 				+ inputJsonName + ".jpg";
 		predict_list = new ArrayList();
+		real_list = new ArrayList();
 		real2_list = new ArrayList();
 		try
 		{
@@ -175,17 +177,18 @@ public class RServeConnection
 			if (predict_json.SavetoJson(predict_list, predictPath, "pd"))
 			{
 				System.out.println(k + "步预测数据写入成功 : " + predictPath);
-				
+
 				c.eval("flag2<-base+learnstep");
 				for (int i = 0; i < k; i++)
 				{
 					c.eval("presteppart<-f[(flag2+1):(flag2+learnstep)]");// 步长级观测值
-					t_real = c.eval("sd(diff(log(presteppart))*100)^2").asDouble();// 方差
+					t_real = c.eval("sd(diff(log(presteppart))*100)^2")
+							.asDouble();// 方差
 					real2_list.add(new Double(t_real));
 					c.eval("flag2<-flag2+learnstep");
 				}
 				real_json.SavetoJson(real2_list, realDiffSD, "sd");
-				
+
 				c.eval("json_predict<-fromJSON(paste(readLines('" + predictPath
 						+ "'), collapse=''))");
 				c.eval("json_real<-fromJSON(paste(readLines('" + realDiffSD
@@ -198,10 +201,9 @@ public class RServeConnection
 				c.eval("par(new=TRUE)");
 				c.eval("plot(rf2,type='o',col='green',axes = FALSE,ylim=c(0,h))");
 				c.eval("dev.off()");
-			}
-			else
+			} else
 				System.out.println(k + "步预测数据写入失败 : " + predictPath);
-			
+
 		} catch (Exception exception)
 		{
 			System.out.println(exception.toString());
@@ -211,23 +213,33 @@ public class RServeConnection
 
 	public void predict_real(int p, int q)
 	{
-		filePath = folderPath + "real/realDiff-" + inputJsonName + ".jpg";
-		realDiffSD = folderPath + "real/realDiff-" + inputJsonName + ".json";
+		filePath = folderPath + "real/realDiff-" + p + "," + q + ")-"
+				+ inputJsonName + ".jpg";
+		realDiffSD = folderPath + "real/realDiff-" + p + "," + q + ")-"
+				+ inputJsonName + ".json";
 		outputFilePath = folderPath + "output/Predict-garch(" + p + "," + q
 				+ ")-" + inputJsonName + ".json";
-		int max = learnstep / prestep;
-		double t_real;
-		ArrayList real_list = new ArrayList();
+		real_list.clear();
 		try
 		{
-			c.eval("flag<-base+learnstep");
-			for (int i = 0; i < max; i++)
-			{
-				c.eval("prepart<-f[(flag+1):(flag+prestep)]");// 观测值
-				t_real = c.eval("sd(diff(log(prepart))*100)^2").asDouble();// 实际方差
-				real_list.add(new Double(t_real));
-				c.eval("flag<-flag+prestep");
-			}
+			// // 原来的逻辑,按取样区间计算方差
+			// int max = learnstep / prestep;
+			// c.eval("flag<-base+learnstep");
+			// for (int i = 0; i < max; i++)
+			// {
+			// c.eval("prepart<-f[(flag+1):(flag+prestep)]");// 观测值
+			// t_real = c.eval("sd(diff(log(prepart))*100)^2").asDouble();//
+			// 实际方差
+			// real_list.add(new Double(t_real));
+			// c.eval("flag<-flag+prestep");
+			// }
+
+			// 取收益率平方作为方差
+			c.eval("ftemp<-f[(base+learnstep):(base+learnstep+learnstep)]");// 原始数据
+			c.eval("fd<-diff(log(ftemp))*100");// 差分
+			double[] d_real_list = c.eval("fd^2").asDoubles();// 差分
+			for (int i = 0; i < d_real_list.length; i++)
+				real_list.add(new Double(d_real_list[i]));
 			JsonFileHelper real_json = new JsonFileHelper();
 			if (real_json.SavetoJson(real_list, realDiffSD, "sd"))
 				System.out.println("观测数据写入成功 : " + realDiffSD);
@@ -238,11 +250,7 @@ public class RServeConnection
 			c.eval("source('D:/workspace/garch/test/timeseriesanalysis/real.R')");
 			c.eval("fm1<-(fitted(m1)[,1])^2");
 			c.eval("h<-max(max(as.double(rf)),max(fm1[2:learnstep]))");
-			c.eval("jpeg('" + filePath + "')");
-			c.eval("plot(fm1,col='red',type='l',ylab='Conditional Variance',ylim=c(0,h),xlab='t')");// 拟合值
-			c.eval("par(new=TRUE)");
-			c.eval("plot(rf,type='l',col='green',ylab='Conditional Variance',ylim=c(0,h),axes = FALSE,xlab='t')");
-			c.eval("dev.off()");
+			
 
 			ArrayList predict_list = new ArrayList();
 			double[] data = c.eval("(fitted(m1)[,1])^2").asDoubles();
@@ -253,6 +261,13 @@ public class RServeConnection
 				System.out.println("预测数据写入成功 : " + outputFilePath);
 			else
 				System.out.println("预测数据写入失败 : " + outputFilePath);
+			
+			c.eval("jpeg('" + filePath + "')");
+			c.eval("plot(rf,type='l',col='green',ylab='Conditional Variance',ylim=c(0,h),xlab='t')");//DEBUG
+			c.eval("par(new=TRUE)");
+			c.eval("plot(fm1,col='red',type='l',ylab='Conditional Variance',ylim=c(0,h),axes = FALSE,xlab='t')");// 拟合值
+			c.eval("dev.off()");
+			
 		} catch (Exception exception)
 		{
 			System.out.println(exception.toString());
