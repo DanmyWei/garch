@@ -337,6 +337,7 @@ public class Panel
 				try
 				{
 					rsc.predict_real(p, q);
+
 					Display display = Display.getDefault();
 					Image image = new Image(display, rsc.getFilePath());
 					ImageData data = image.getImageData();
