@@ -15,6 +15,7 @@ public class RServeConnection
 	private static String filePath;
 	private static String outputFilePath;
 	private static String realDiffSD;
+	private static String realDiffVar;
 	private static RConnection c = null;
 	private static String inputJsonName;
 	private static String predictPath;
@@ -27,6 +28,7 @@ public class RServeConnection
 	private static ArrayList predict_list;// 向前预测序列
 	private static ArrayList real_list;
 	private static ArrayList real2_list;
+	private static ArrayList real_var_list;
 
 	public RServeConnection()
 	{
@@ -119,6 +121,8 @@ public class RServeConnection
 		predict_list = new ArrayList();
 		real_list = new ArrayList();
 		real2_list = new ArrayList();
+		real_var_list = new ArrayList();
+		index = 0;
 		try
 		{
 			c.eval("base<-" + String.valueOf(base));
@@ -182,7 +186,7 @@ public class RServeConnection
 				for (int i = 0; i < k; i++)
 				{
 					c.eval("presteppart<-f[(flag2+1):(flag2+learnstep)]");// 步长级观测值
-					t_real = c.eval("sd(diff(log(presteppart))*100)^2")
+					t_real = c.eval("var(diff(log(presteppart))*100)")
 							.asDouble();// 方差
 					real2_list.add(new Double(t_real));
 					c.eval("flag2<-flag2+learnstep");
@@ -213,33 +217,137 @@ public class RServeConnection
 
 	public void predict_real(int p, int q)
 	{
-		filePath = folderPath + "real/realDiff-" + p + "," + q + ")-"
+		switch(index)
+		{
+		case 0:
+			predict_real_start(p, q);
+			index = 2;
+			break;
+		case 1:
+			predict_real_run(p, q);
+			index++;
+			break;
+		case 2:
+			predict_real_log(p,q);
+			index++;
+			break;
+		case 3:
+			predict_real_var(p,q);
+			index=1;
+			break;
+		default:
+			System.out.println("数据非法,index="+index);
+		}
+	}
+	
+	public void predict_real_run(int p, int q)
+	{
+		filePath = folderPath + "real/realDiff-(" + p + "," + q + ")-"
 				+ inputJsonName + ".jpg";
-		realDiffSD = folderPath + "real/realDiff-" + p + "," + q + ")-"
-				+ inputJsonName + ".json";
+		try
+		{
+			c.eval("jpeg('" + filePath + "')");
+			c.eval("plot(rf,type='l',col='green',ylab='Conditional Variance',ylim=c(0,h),xlab='t')");// DEBUG,纵轴无穷大导致
+			c.eval("par(new=TRUE)");
+			c.eval("plot(rfv,type='l',col='blue',ylab='Conditional Variance',ylim=c(0,h),axes = FALSE,xlab='t')");
+			c.eval("par(new=TRUE)");
+			c.eval("plot(fm1,col='red',type='l',ylab='Conditional Variance',ylim=c(0,h),xlab='t')");// 拟合值
+			c.eval("dev.off()");
+		} catch (Exception exception)
+		{
+			System.out.println(exception.toString());
+			exception.printStackTrace();
+		}
+	}
+	
+	public void predict_real_var(int p, int q)
+	{
+		filePath = folderPath + "real/realDiff-(" + p + "," + q + ")-"
+				+ inputJsonName + ".jpg";
+		try
+		{
+			c.eval("jpeg('" + filePath + "')");
+			c.eval("plot(rfv,type='l',col='blue',ylab='Conditional Variance',ylim=c(0,h),axes = FALSE,xlab='t')");
+			c.eval("par(new=TRUE)");
+			c.eval("plot(fm1,col='red',type='l',ylab='Conditional Variance',ylim=c(0,h),xlab='t')");// 拟合值
+			c.eval("dev.off()");
+		} catch (Exception exception)
+		{
+			System.out.println(exception.toString());
+			exception.printStackTrace();
+		}
+	}
+	
+	public void predict_real_log(int p, int q)
+	{
+		filePath = folderPath + "real/realDiff-(" + p + "," + q + ")-"
+				+ inputJsonName + ".jpg";
+		try
+		{
+			c.eval("jpeg('" + filePath + "')");
+			c.eval("plot(rf,type='l',col='green',ylab='Conditional Variance',ylim=c(0,h),xlab='t')");// DEBUG,纵轴无穷大导致
+			c.eval("par(new=TRUE)");
+			c.eval("plot(fm1,col='red',type='l',ylab='Conditional Variance',ylim=c(0,h),xlab='t')");// 拟合值
+			c.eval("dev.off()");
+		} catch (Exception exception)
+		{
+			System.out.println(exception.toString());
+			exception.printStackTrace();
+		}
+	}
+	
+	public void predict_real_start(int p, int q)
+	{
+		filePath = folderPath + "real/realDiff-(" + p + "," + q + ")-"
+				+ inputJsonName + ".jpg";
+		realDiffSD = folderPath + "real/realDiff-" + inputJsonName + ".json";
+		realDiffVar = folderPath + "real/realDiffVar-" + inputJsonName
+				+ ".json";
 		outputFilePath = folderPath + "output/Predict-garch(" + p + "," + q
 				+ ")-" + inputJsonName + ".json";
 		real_list.clear();
+		real_var_list.clear();
 		try
 		{
-			// // 原来的逻辑,按取样区间计算方差
-			// int max = learnstep / prestep;
-			// c.eval("flag<-base+learnstep");
-			// for (int i = 0; i < max; i++)
-			// {
-			// c.eval("prepart<-f[(flag+1):(flag+prestep)]");// 观测值
-			// t_real = c.eval("sd(diff(log(prepart))*100)^2").asDouble();//
-			// 实际方差
-			// real_list.add(new Double(t_real));
-			// c.eval("flag<-flag+prestep");
-			// }
 
-			// 取收益率平方作为方差
-			c.eval("ftemp<-f[(base+learnstep):(base+learnstep+learnstep)]");// 原始数据
-			c.eval("fd<-diff(log(ftemp))*100");// 差分
-			double[] d_real_list = c.eval("fd^2").asDoubles();// 差分
+			// 原来的逻辑,按取样区间计算平均方差 (蓝色)
+			int max = learnstep / prestep;
+			double var_real;
+			c.eval("flag<-base+learnstep");
+			for (int i = 0; i < max; i++)
+			{
+				c.eval("prepart<-f[(flag+1):(flag+prestep)]");// 观测值
+				var_real = c.eval("var(diff(log(prepart))*100)").asDouble();// 实际方差
+				real_var_list.add(new Double(var_real));
+				c.eval("flag<-flag+prestep");
+			}
+
+			JsonFileHelper real_var_json = new JsonFileHelper();
+			if (real_var_json.SavetoJson(real_var_list, realDiffVar, "sd"))
+				System.out.println("平均方差写入成功 : " + realDiffVar);
+			else
+				System.out.println("平均方差写入失败 : " + realDiffVar);
+
+			// 取收益率绝对值作为瞬时方差近似值(绿色)
+			c.eval("ftemp<-f[(base+learnstep):(base+learnstep+learnstep+1)]");// 原始数据
+			c.eval("fd<-diff(log(ftemp)*100)");// 差分
+			double tr;
+			double[] d_real_list = c.eval("log(temp)*10").asDoubles();// 差分
+
 			for (int i = 0; i < d_real_list.length; i++)
-				real_list.add(new Double(d_real_list[i]));
+				if (d_real_list[i] >= Double.MAX_VALUE
+						|| d_real_list[i] <= -Double.MAX_VALUE)
+					d_real_list[i] = 0;
+				else if (d_real_list[i] != d_real_list[i])
+					d_real_list[i] = 0;
+
+			for (int i = 0; i < learnstep; i++)
+			{
+				tr = d_real_list[i + 1] - d_real_list[i];
+				tr = tr > 0 ? tr : -tr;
+				real_list.add(new Double(tr));
+			}
+
 			JsonFileHelper real_json = new JsonFileHelper();
 			if (real_json.SavetoJson(real_list, realDiffSD, "sd"))
 				System.out.println("观测数据写入成功 : " + realDiffSD);
@@ -248,9 +356,19 @@ public class RServeConnection
 			c.eval("json_real<-fromJSON(paste(readLines('" + realDiffSD
 					+ "'), collapse=''))");
 			c.eval("source('D:/workspace/garch/test/timeseriesanalysis/real.R')");
+
+			c.eval("json_var_real<-fromJSON(paste(readLines('" + realDiffVar
+					+ "'), collapse=''))");
+			c.eval("source('D:/workspace/garch/test/timeseriesanalysis/real_var.R')");
+
 			c.eval("fm1<-(fitted(m1)[,1])^2");
 			c.eval("h<-max(max(as.double(rf)),max(fm1[2:learnstep]))");
-			
+
+			// 纵轴为无穷大时,直接设置为1
+			if (c.eval("h").asDouble() >= Double.MAX_VALUE
+					|| c.eval("h").asDouble() <= -Double.MAX_VALUE
+					|| c.eval("h").asDouble() != c.eval("h").asDouble())
+				c.eval("h<-1");
 
 			ArrayList predict_list = new ArrayList();
 			double[] data = c.eval("(fitted(m1)[,1])^2").asDoubles();
@@ -261,13 +379,15 @@ public class RServeConnection
 				System.out.println("预测数据写入成功 : " + outputFilePath);
 			else
 				System.out.println("预测数据写入失败 : " + outputFilePath);
-			
+
 			c.eval("jpeg('" + filePath + "')");
-			c.eval("plot(rf,type='l',col='green',ylab='Conditional Variance',ylim=c(0,h),xlab='t')");//DEBUG
+			c.eval("plot(rf,type='l',col='green',ylab='Conditional Variance',ylim=c(0,h),xlab='t')");// DEBUG,纵轴无穷大导致
 			c.eval("par(new=TRUE)");
-			c.eval("plot(fm1,col='red',type='l',ylab='Conditional Variance',ylim=c(0,h),axes = FALSE,xlab='t')");// 拟合值
+			c.eval("plot(rfv,type='l',col='blue',ylab='Conditional Variance',ylim=c(0,h),axes = FALSE,xlab='t')");
+			c.eval("par(new=TRUE)");
+			c.eval("plot(fm1,col='red',type='l',ylab='Conditional Variance',ylim=c(0,h),xlab='t')");// 拟合值
 			c.eval("dev.off()");
-			
+
 		} catch (Exception exception)
 		{
 			System.out.println(exception.toString());
