@@ -190,6 +190,7 @@ public class RServeConnection
 							.asDouble();// 方差
 					real2_list.add(new Double(t_real));
 					c.eval("flag2<-flag2+learnstep");
+//					c.eval("flag2<-flag2+1");
 				}
 				real_json.SavetoJson(real2_list, realDiffSD, "sd");
 
@@ -200,10 +201,11 @@ public class RServeConnection
 				c.eval("source('D:/workspace/garch/test/timeseriesanalysis/real2.R')");
 				c.eval("source('D:/workspace/garch/test/timeseriesanalysis/predict.R')");
 				c.eval("h<-max(max(as.double(pf)),max(as.double(rf2)))");
+				c.eval("low<-min(min(as.double(pf)),min(as.double(rf2)))");
 				c.eval("jpeg('" + filePath + "')");
-				c.eval("plot(pf,type='o',col='red',ylim=c(0,h))");
+				c.eval("plot(pf,type='o',col='red',ylim=c(low*0.5,h*1.1))");
 				c.eval("par(new=TRUE)");
-				c.eval("plot(rf2,type='o',col='green',axes = FALSE,ylim=c(0,h))");
+				c.eval("plot(rf2,type='o',col='green',axes = FALSE,ylim=c(low*0.5,h*1.1))");
 				c.eval("dev.off()");
 			} else
 				System.out.println(k + "步预测数据写入失败 : " + predictPath);
@@ -313,7 +315,8 @@ public class RServeConnection
 			// 原来的逻辑,按取样区间计算平均方差 (蓝色)
 			int max = learnstep / prestep;
 			double var_real;
-			c.eval("flag<-base+learnstep");
+//			c.eval("flag<-base+learnstep");
+			c.eval("flag<-base");
 			for (int i = 0; i < max; i++)
 			{
 				c.eval("prepart<-f[(flag+1):(flag+prestep)]");// 观测值
@@ -361,7 +364,9 @@ public class RServeConnection
 					+ "'), collapse=''))");
 			c.eval("source('D:/workspace/garch/test/timeseriesanalysis/real_var.R')");
 
-			c.eval("fm1<-(fitted(m1)[,1])^2");
+//			c.eval("fm1<-(fitted(m1)[,1])^2");
+			c.eval("fm1<-(predict(m1)[,1])^2");
+//			c.eval("fm1<-(predict(m1,newdata=data.frame(learnstep:(learnstep+learnstep)))[,1])^2");
 			c.eval("h<-max(max(as.double(rf)),max(fm1[2:learnstep]))");
 
 			// 纵轴为无穷大时,直接设置为1
@@ -371,7 +376,7 @@ public class RServeConnection
 				c.eval("h<-1");
 
 			ArrayList predict_list = new ArrayList();
-			double[] data = c.eval("(fitted(m1)[,1])^2").asDoubles();
+			double[] data = c.eval("fm1").asDoubles();
 			for (int i = 0; i < data.length; i++)
 				predict_list.add(new Double(data[i]));
 			JsonFileHelper predict_json = new JsonFileHelper();

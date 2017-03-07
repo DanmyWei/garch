@@ -3,7 +3,7 @@ library(TSA)
 library(rjson)
 
 #数据载入
-json_data<-fromJSON(paste(readLines('D:/R-Data/SpotData/c4.2xlarge-spotprice_linux-unix_us-east-1b.json'), collapse=''))
+json_data<-fromJSON(paste(readLines('D:/R-Data/SpotData/c4.4xlarge-spotprice_linux-unix_us-east-1e.json'), collapse=''))
 #预处理
 source("D:/workspace/garch/test/timeseriesanalysis/ParseSpotScript.R")
 base<-100
@@ -23,14 +23,16 @@ prepart<-f[(base+learnstep+1):(base+learnstep+prestep)]
 
 #差分建模
 d<-diff(log(temp))*100
-m1=garch(d,order=c(1,1))
+m1<-garch(d,order=c(1,1))
 summary(m1)
 
 #图形分析
 #plot(residuals(m1),type='h')
 #qqnorm(residuals(m1))
 #qqline(residuals(m1))
-plot((fitted(m1)[,1])^2,col='blue',type='l',ylab='Conditional Variance',ylim=c(0,5000),xlab='t')
+fm1<-(fitted(m1)[,1])^2
+pm1<-(predict(m1,newdata=data.frame(learnstep:(learnstep+learnstep)))[,1])^2
+plot(pm1,col='blue',type='l',ylab='Conditional Variance',ylim=c(0,50),xlab='t')
 
 #长期方差预测
 long = m1$coef[1]/(1-m1$coef[2]-m1$coef[3])
