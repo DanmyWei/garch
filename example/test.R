@@ -3,11 +3,11 @@ library(TSA)
 library(rjson)
 
 #数据载入
-json_data<-fromJSON(paste(readLines('D:/R-Data/SpotData/c4.4xlarge-spotprice_linux-unix_us-east-1e.json'), collapse=''))
+json_data<-fromJSON(paste(readLines('D:/R-Data/SpotData/c4.2xlarge-spotprice_linux-unix_us-east-1b.json'), collapse=''))
 #预处理
 source("D:/workspace/garch/test/timeseriesanalysis/ParseSpotScript.R")
 base<-100
-learnstep<-360
+learnstep<-100
 prestep<-30
 temp<-f[base:(base+learnstep)]
 prepart<-f[(base+learnstep+1):(base+learnstep+prestep)]

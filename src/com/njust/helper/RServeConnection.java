@@ -22,7 +22,7 @@ public class RServeConnection
 	private static double t_predict;
 	private static double t_long;
 	private static int base = 100;// 拟合起点
-	private static int learnstep = 360;// 拟合长度
+	private static int learnstep = 100;// 拟合长度
 	private static int prestep = 10;// 取样间隔
 	private static double aic;
 	private static ArrayList predict_list;// 向前预测序列
@@ -106,6 +106,7 @@ public class RServeConnection
 		list.add("library(TSA)");
 		list.add("library(rjson)");
 		list.add("library(fGarch)");
+		list.add("library(forecast)");
 		list.add("json_data<-fromJSON(paste(readLines('" + jsonPath
 				+ "'), collapse=''))");
 		list.add("source('D:/workspace/garch/test/timeseriesanalysis/ParseSpotScript.R')");
@@ -188,9 +189,14 @@ public class RServeConnection
 					c.eval("presteppart<-f[(flag2+1):(flag2+learnstep)]");// 步长级观测值
 					t_real = c.eval("var(diff(log(presteppart))*100)")
 							.asDouble();// 方差
+					if (t_real != t_real)
+					{
+						t_real = 0;
+						System.out.println("数据越界,超出观测范围!");
+					}
 					real2_list.add(new Double(t_real));
 					c.eval("flag2<-flag2+learnstep");
-//					c.eval("flag2<-flag2+1");
+					// c.eval("flag2<-flag2+1");
 				}
 				real_json.SavetoJson(real2_list, realDiffSD, "sd");
 
@@ -200,12 +206,12 @@ public class RServeConnection
 						+ "'), collapse=''))");
 				c.eval("source('D:/workspace/garch/test/timeseriesanalysis/real2.R')");
 				c.eval("source('D:/workspace/garch/test/timeseriesanalysis/predict.R')");
-				c.eval("h<-max(max(as.double(pf)),max(as.double(rf2)))");
+				c.eval("h2<-max(max(as.double(pf)),max(as.double(rf2)))");
 				c.eval("low<-min(min(as.double(pf)),min(as.double(rf2)))");
 				c.eval("jpeg('" + filePath + "')");
-				c.eval("plot(pf,type='o',col='red',ylim=c(low*0.5,h*1.1))");
+				c.eval("plot(pf,type='o',col='red',ylim=c(low*0.5,h2*1.1))");
 				c.eval("par(new=TRUE)");
-				c.eval("plot(rf2,type='o',col='green',axes = FALSE,ylim=c(low*0.5,h*1.1))");
+				c.eval("plot(rf2,type='o',col='green',axes = FALSE,ylim=c(low*0.5,h2*1.1))");
 				c.eval("dev.off()");
 			} else
 				System.out.println(k + "步预测数据写入失败 : " + predictPath);
@@ -219,7 +225,7 @@ public class RServeConnection
 
 	public void predict_real(int p, int q)
 	{
-		switch(index)
+		switch (index)
 		{
 		case 0:
 			predict_real_start(p, q);
@@ -230,18 +236,18 @@ public class RServeConnection
 			index++;
 			break;
 		case 2:
-			predict_real_log(p,q);
+			predict_real_log(p, q);
 			index++;
 			break;
 		case 3:
-			predict_real_var(p,q);
-			index=1;
+			predict_real_var(p, q);
+			index = 1;
 			break;
 		default:
-			System.out.println("数据非法,index="+index);
+			System.out.println("数据非法,index=" + index);
 		}
 	}
-	
+
 	public void predict_real_run(int p, int q)
 	{
 		filePath = folderPath + "real/realDiff-(" + p + "," + q + ")-"
@@ -253,7 +259,7 @@ public class RServeConnection
 			c.eval("par(new=TRUE)");
 			c.eval("plot(rfv,type='l',col='blue',ylab='Conditional Variance',ylim=c(0,h),axes = FALSE,xlab='t')");
 			c.eval("par(new=TRUE)");
-			c.eval("plot(fm1,col='red',type='l',ylab='Conditional Variance',ylim=c(0,h),xlab='t')");// 拟合值
+			c.eval("plot(fm1,col='red',type='l',ylab='Conditional Variance',ylim=c(0,h),xlab='t',main=MAPE)");// 拟合值
 			c.eval("dev.off()");
 		} catch (Exception exception)
 		{
@@ -261,7 +267,7 @@ public class RServeConnection
 			exception.printStackTrace();
 		}
 	}
-	
+
 	public void predict_real_var(int p, int q)
 	{
 		filePath = folderPath + "real/realDiff-(" + p + "," + q + ")-"
@@ -271,7 +277,7 @@ public class RServeConnection
 			c.eval("jpeg('" + filePath + "')");
 			c.eval("plot(rfv,type='l',col='blue',ylab='Conditional Variance',ylim=c(0,h),axes = FALSE,xlab='t')");
 			c.eval("par(new=TRUE)");
-			c.eval("plot(fm1,col='red',type='l',ylab='Conditional Variance',ylim=c(0,h),xlab='t')");// 拟合值
+			c.eval("plot(fm1,col='red',type='l',ylab='Conditional Variance',ylim=c(0,h),xlab='t',main=MAPE_2)");// 拟合值
 			c.eval("dev.off()");
 		} catch (Exception exception)
 		{
@@ -279,7 +285,7 @@ public class RServeConnection
 			exception.printStackTrace();
 		}
 	}
-	
+
 	public void predict_real_log(int p, int q)
 	{
 		filePath = folderPath + "real/realDiff-(" + p + "," + q + ")-"
@@ -289,7 +295,7 @@ public class RServeConnection
 			c.eval("jpeg('" + filePath + "')");
 			c.eval("plot(rf,type='l',col='green',ylab='Conditional Variance',ylim=c(0,h),xlab='t')");// DEBUG,纵轴无穷大导致
 			c.eval("par(new=TRUE)");
-			c.eval("plot(fm1,col='red',type='l',ylab='Conditional Variance',ylim=c(0,h),xlab='t')");// 拟合值
+			c.eval("plot(fm1,col='red',type='l',ylab='Conditional Variance',ylim=c(0,h),xlab='t',main=MAPE_1)");// 拟合值
 			c.eval("dev.off()");
 		} catch (Exception exception)
 		{
@@ -297,7 +303,7 @@ public class RServeConnection
 			exception.printStackTrace();
 		}
 	}
-	
+
 	public void predict_real_start(int p, int q)
 	{
 		filePath = folderPath + "real/realDiff-(" + p + "," + q + ")-"
@@ -315,7 +321,7 @@ public class RServeConnection
 			// 原来的逻辑,按取样区间计算平均方差 (蓝色)
 			int max = learnstep / prestep;
 			double var_real;
-//			c.eval("flag<-base+learnstep");
+			// c.eval("flag<-base+learnstep");
 			c.eval("flag<-base");
 			for (int i = 0; i < max; i++)
 			{
@@ -335,7 +341,7 @@ public class RServeConnection
 			c.eval("ftemp<-f[(base+learnstep):(base+learnstep+learnstep+1)]");// 原始数据
 			c.eval("fd<-diff(log(ftemp)*100)");// 差分
 			double tr;
-			double[] d_real_list = c.eval("log(temp)*10").asDoubles();// 差分
+			double[] d_real_list = c.eval("log(temp)*100").asDoubles();// 差分
 
 			for (int i = 0; i < d_real_list.length; i++)
 				if (d_real_list[i] >= Double.MAX_VALUE
@@ -364,9 +370,9 @@ public class RServeConnection
 					+ "'), collapse=''))");
 			c.eval("source('D:/workspace/garch/test/timeseriesanalysis/real_var.R')");
 
-//			c.eval("fm1<-(fitted(m1)[,1])^2");
+			// c.eval("fm1<-(fitted(m1)[,1])^2");
 			c.eval("fm1<-(predict(m1)[,1])^2");
-//			c.eval("fm1<-(predict(m1,newdata=data.frame(learnstep:(learnstep+learnstep)))[,1])^2");
+			// c.eval("fm1<-(predict(m1,newdata=data.frame(learnstep:(learnstep+learnstep)))[,1])^2");
 			c.eval("h<-max(max(as.double(rf)),max(fm1[2:learnstep]))");
 
 			// 纵轴为无穷大时,直接设置为1
@@ -385,13 +391,50 @@ public class RServeConnection
 			else
 				System.out.println("预测数据写入失败 : " + outputFilePath);
 
+			c.eval("acv1<-mean(as.double(rf))/mean((as.double(fm1)[2:learnstep]))");
+			c.eval("acv2<-mean(as.double(rfv))/mean((as.double(fm1)[2:learnstep]))");
+			c.eval("MAPE_1<-accuracy(as.double(rf[2:learnstep])/acv1,(as.double(fm1))[2:learnstep])[5]")
+					.asDouble();
+			c.eval("MAPE_2<-accuracy((as.double(fm1)*acv2)[2:learnstep],as.double(rfv))[5]")
+					.asDouble();
+			c.eval("MAPE_3<-accuracy(as.double(rf),as.double(rfv))[5]")
+					.asDouble();
+			double MAPE_1 = c.eval("MAPE_1").asDouble();
+			double MAPE_2 = c.eval("MAPE_2").asDouble();
+			double MAPE_3 = c.eval("MAPE_3").asDouble();
+			if (MAPE_1 != MAPE_1 || MAPE_1 >= Double.MAX_VALUE)
+			{
+				c.eval("MAPE_1<-accuracy((as.double(fm1))[2:learnstep],as.double(rf[2:learnstep])/acv1)[5]")
+						.asDouble();
+				MAPE_1 = c.eval("MAPE_1").asDouble();
+			}
+
+			if (MAPE_2 != MAPE_2 || MAPE_2 >= Double.MAX_VALUE)
+			{
+				c.eval("MAPE_2<-accuracy(as.double(rfv),(as.double(fm1)*acv2)[2:learnstep])[5]")
+						.asDouble();
+				MAPE_2 = c.eval("MAPE_2").asDouble();
+			}
+
+			if (MAPE_3 != MAPE_3 || MAPE_3 >= Double.MAX_VALUE)
+			{
+				c.eval("MAPE_3<-accuracy(as.double(rfv),as.double(rf))[5]")
+						.asDouble();
+				MAPE_3 = c.eval("MAPE_3").asDouble();
+			}
+
+			c.eval("MAPE<-min(as.double(MAPE_1),as.double(MAPE_2))");
 			c.eval("jpeg('" + filePath + "')");
 			c.eval("plot(rf,type='l',col='green',ylab='Conditional Variance',ylim=c(0,h),xlab='t')");// DEBUG,纵轴无穷大导致
 			c.eval("par(new=TRUE)");
 			c.eval("plot(rfv,type='l',col='blue',ylab='Conditional Variance',ylim=c(0,h),axes = FALSE,xlab='t')");
 			c.eval("par(new=TRUE)");
-			c.eval("plot(fm1,col='red',type='l',ylab='Conditional Variance',ylim=c(0,h),xlab='t')");// 拟合值
+			c.eval("plot(fm1,col='red',type='l',ylab='Conditional Variance',ylim=c(0,h),xlab='t',main=MAPE)");// 拟合值
 			c.eval("dev.off()");
+
+			System.out.println("MAPE_1=" + MAPE_1);
+			System.out.println("MAPE_2=" + MAPE_2);
+			System.out.println("MAPE_3=" + MAPE_3);
 
 		} catch (Exception exception)
 		{
