@@ -26,7 +26,7 @@ public class RServeConnection
 	private static int base = 100;// 拟合起点
 	private static int learnstep = 100;// 拟合长度
 	private static int prestep = 5;// 取样间隔
-	private static int lenth_mape = 5;// MAPE间隔
+	private static int lenth_mape = 10;// MAPE间隔
 	private static double aic;
 	private static ArrayList predict_list;// 向前预测序列
 	private static ArrayList real_list;
@@ -139,8 +139,8 @@ public class RServeConnection
 			c.eval("presteppart<-f[(flag+1):(flag+learnstep)]");// 步长级观测值
 
 			c.eval("m1=garch(x=d,order=c(" + p + "," + q + "))");// 拟合garch模型
-			// c.eval("g1 = garchFit(formula=~garch(" + p + "," + q +
-			// "),data=temp,trace=F,cond.dist='std')");
+			c.eval("g1 = garchFit(formula=~garch(" + p + "," + q
+					+ "),data=d,trace=F,cond.dist='std')");
 			c.eval("jpeg('" + filePath + "')");
 			System.out.println("图像渲染成功 : " + filePath);
 			c.eval("plot(residuals(m1),type='l',ylab = 'Standard residual')");// 异方差模型标准残差分布
@@ -344,7 +344,7 @@ public class RServeConnection
 
 			// 取收益率绝对值作为瞬时方差近似值(绿色)
 			c.eval("ftemp<-f[(base+learnstep):(base+learnstep+learnstep+1)]");// 原始数据
-			c.eval("fd<-diff(log(ftemp)*100)");// 差分
+			c.eval("fd<-diff(log(temp)*100)");// 差分
 			double tr;
 			double[] d_real_list = c.eval("log(temp)*100").asDoubles();// 差分
 
@@ -376,11 +376,11 @@ public class RServeConnection
 			c.eval("source('D:/workspace/garch/test/timeseriesanalysis/real_var.R')");
 
 			// c.eval("fm1<-(fitted(m1)[,1])^2");
+			// c.eval("fm1<-(predict(m1,d)[,1])^2");
 			c.eval("fm1<-(predict(m1)[,1])^2");
 			c.eval("fm1[1]<-fm1[2]");
 			c.eval("rf<-as.double(rf)");
 			c.eval("rfv<-as.double(rfv)");
-			// c.eval("fm1<-(predict(m1,newdata=data.frame(learnstep:(learnstep+learnstep)))[,1])^2");
 			c.eval("h<-max(max(rf),max(fm1))");
 
 			// 纵轴为无穷大时,直接设置为1
@@ -399,27 +399,22 @@ public class RServeConnection
 			else
 				System.out.println("预测数据写入失败 : " + outputFilePath);
 
+			// c.eval("pm1<-fm1 - min(fm1) + min(rf)");
+			// c.eval("pm1<-fm1");
 			c.eval("pm1<-fm1 - min(fm1) + min(rf)");
-
-			c.eval("MAPE_1<-accuracy(rf,fm1)[5]").asDouble();
-			c.eval("MAPE_2<-accuracy(rfv,fm1)[5]").asDouble();
+			// c.eval("fm1<-fm1 - min(fm1) + min(rf)");
+			
+			c.eval("MAPE_1<-accuracy(rf + min(fm1) - min(rf),fm1)[5]").asDouble();
+			c.eval("MAPE_2<-accuracy(rfv + min(fm1) - min(rf),fm1)[5]").asDouble();
 			double MAPE_1 = c.eval("MAPE_1").asDouble();
 			double MAPE_2 = c.eval("MAPE_2").asDouble();
-			if (MAPE_1 != MAPE_1
-					|| c.eval("is.infinite(MAPE_1)").asString().equals("TRUE"))
-			{
-				c.eval("MAPE_1<-accuracy(pm1,rf)[5]").asDouble();
-				MAPE_1 = c.eval("MAPE_1").asDouble();
-			}
-
-			if (MAPE_2 != MAPE_2
-					|| c.eval("is.infinite(MAPE_2)").asString().equals("TRUE"))
-			{
-				c.eval("MAPE_2<-accuracy(pm1,rfv)[5]").asDouble();
-				MAPE_2 = c.eval("MAPE_2").asDouble();
-			}
 
 			c.eval("MAPE<-min(as.double(MAPE_1),as.double(MAPE_2))");
+			
+			c.eval("rf<-rf[length(rf):1]");
+			c.eval("rfv<-rfv[length(rfv):1]");
+			c.eval("pm1<-pm1[length(pm1):1]");
+			
 			c.eval("jpeg('" + filePath + "')");
 			c.eval("plot(rf,type='l',col='green',ylab='Conditional Variance',ylim=c(0,h),xlab='t')");// DEBUG,纵轴无穷大导致
 			c.eval("par(new=TRUE)");
@@ -435,7 +430,7 @@ public class RServeConnection
 			for (int i = 0; i < learnstep / lenth_mape; i++)
 			{
 				double mape = c.eval(
-						"accuracy(rf[" + (i * lenth_mape + 1) + ":"
+						"accuracy((rf+ min(fm1) - min(rf))[" + (i * lenth_mape + 1) + ":"
 								+ (i * lenth_mape + lenth_mape) + "],fm1["
 								+ (i * lenth_mape + 1) + ":"
 								+ (i * lenth_mape + lenth_mape) + "])[5]")
@@ -451,8 +446,9 @@ public class RServeConnection
 					+ "'), collapse=''))");
 			c.eval("source('D:/workspace/garch/test/timeseriesanalysis/mape.R')");
 			c.eval("rmape<-as.double(rmape)");
+			
 			c.eval("jpeg('" + MAPEPICPATH + "')");
-			c.eval("plot(rmape,type='o',col='green',ylim=c(0,max(150,max(rmape)*1.1)),ylab='MAPE (%)',xlab='prestep')");
+			c.eval("plot(rmape,type='b',col='green',ylim=c(0,max(150,max(rmape)*1.1)),ylab='MAPE (%)',xlab='prestep')");
 			c.eval("abline(h=100)");
 			c.eval("dev.off()");
 		} catch (Exception exception)
@@ -461,12 +457,12 @@ public class RServeConnection
 			exception.printStackTrace();
 		}
 	}
-	
+
 	public void mape_pic()
 	{
 		filePath = MAPEPICPATH;
 	}
-	
+
 	public void acf(int p, int q)
 	{
 		filePath = folderPath + "ACF-garch(" + p + "," + q + ")-"
