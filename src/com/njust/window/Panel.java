@@ -122,7 +122,7 @@ public class Panel
 
 		Button btn_predict = new Button(shell, SWT.NONE);
 		btn_predict.setText("向前预测");
-		btn_predict.setBounds(531, 745, 80, 27);
+		btn_predict.setBounds(531, 751, 80, 27);
 
 		final RServeConnection rsc = new RServeConnection();
 		rsc.setFolderPath("D", "R-Data");
@@ -168,7 +168,7 @@ public class Panel
 
 		Button btn_real = new Button(shell, SWT.NONE);
 		btn_real.setText("1步序列校验");
-		btn_real.setBounds(531, 712, 80, 27);
+		btn_real.setBounds(531, 686, 80, 27);
 
 		Label lblaic = new Label(shell, SWT.NONE);
 		lblaic.setText("拟合模型AIC值:");
@@ -201,7 +201,7 @@ public class Panel
 
 		Button btn_next = new Button(shell, SWT.NONE);
 		btn_next.setText("下一步");
-		btn_next.setBounds(531, 778, 80, 27);
+		btn_next.setBounds(531, 784, 80, 27);
 
 		Label label_3 = new Label(shell, SWT.NONE);
 		label_3.setText("拟合长期方差:");
@@ -220,6 +220,10 @@ public class Panel
 				SWT.NORMAL));
 		label_2.setAlignment(SWT.CENTER);
 		label_2.setBounds(270, 691, 244, 114);
+		
+		Button btn_mape = new Button(shell, SWT.NONE);
+		btn_mape.setText("MAPE分布");
+		btn_mape.setBounds(531, 719, 80, 27);
 
 		btn_build.addSelectionListener(new SelectionAdapter()
 		{
@@ -413,26 +417,6 @@ public class Panel
 			}
 		});
 
-		btn_gbox.addSelectionListener(new SelectionAdapter()
-		{
-			public void widgetSelected(SelectionEvent e)
-			{
-				try
-				{
-					rsc.gbox(p, q);
-					Display display = Display.getDefault();
-					Image image = new Image(display, rsc.getFilePath());
-					ImageData data = image.getImageData();
-					data = data.scaledTo(600, 600);
-					image = new Image(display, data);
-					lblNewLabel.setImage(image);
-				} catch (Exception ex)
-				{
-					System.out.println(ex.toString());
-				}
-			}
-		});
-
 		btn_qq.addSelectionListener(new SelectionAdapter()
 		{
 			public void widgetSelected(SelectionEvent e)
@@ -460,6 +444,25 @@ public class Panel
 				try
 				{
 					rsc.res(p, q);
+					Display display = Display.getDefault();
+					Image image = new Image(display, rsc.getFilePath());
+					ImageData data = image.getImageData();
+					data = data.scaledTo(600, 600);
+					image = new Image(display, data);
+					lblNewLabel.setImage(image);
+				} catch (Exception ex)
+				{
+					System.out.println(ex.toString());
+				}
+			}
+		});
+		
+		btn_mape.addSelectionListener(new SelectionAdapter() {
+			public void widgetSelected(SelectionEvent e)
+			{
+				try
+				{
+					rsc.mape_pic();
 					Display display = Display.getDefault();
 					Image image = new Image(display, rsc.getFilePath());
 					ImageData data = image.getImageData();

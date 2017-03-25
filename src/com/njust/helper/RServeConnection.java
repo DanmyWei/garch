@@ -16,6 +16,8 @@ public class RServeConnection
 	private static String outputFilePath;
 	private static String realDiffSD;
 	private static String realDiffVar;
+	private static String MAPEPATH;
+	private static String MAPEPICPATH;
 	private static RConnection c = null;
 	private static String inputJsonName;
 	private static String predictPath;
@@ -23,7 +25,8 @@ public class RServeConnection
 	private static double t_long;
 	private static int base = 100;// 拟合起点
 	private static int learnstep = 100;// 拟合长度
-	private static int prestep = 10;// 取样间隔
+	private static int prestep = 5;// 取样间隔
+	private static int lenth_mape = 5;// MAPE间隔
 	private static double aic;
 	private static ArrayList predict_list;// 向前预测序列
 	private static ArrayList real_list;
@@ -259,7 +262,7 @@ public class RServeConnection
 			c.eval("par(new=TRUE)");
 			c.eval("plot(rfv,type='l',col='blue',ylab='Conditional Variance',ylim=c(0,h),axes = FALSE,xlab='t')");
 			c.eval("par(new=TRUE)");
-			c.eval("plot(fm1,col='red',type='l',ylab='Conditional Variance',ylim=c(0,h),xlab='t',main=MAPE)");// 拟合值
+			c.eval("plot(pm1,col='red',type='l',ylab='Conditional Variance',ylim=c(0,h),xlab='t',main=MAPE)");// 拟合值
 			c.eval("dev.off()");
 		} catch (Exception exception)
 		{
@@ -277,7 +280,7 @@ public class RServeConnection
 			c.eval("jpeg('" + filePath + "')");
 			c.eval("plot(rfv,type='l',col='blue',ylab='Conditional Variance',ylim=c(0,h),axes = FALSE,xlab='t')");
 			c.eval("par(new=TRUE)");
-			c.eval("plot(fm1,col='red',type='l',ylab='Conditional Variance',ylim=c(0,h),xlab='t',main=MAPE_2)");// 拟合值
+			c.eval("plot(pm1,col='red',type='l',ylab='Conditional Variance',ylim=c(0,h),xlab='t',main=MAPE_2)");// 拟合值
 			c.eval("dev.off()");
 		} catch (Exception exception)
 		{
@@ -295,7 +298,7 @@ public class RServeConnection
 			c.eval("jpeg('" + filePath + "')");
 			c.eval("plot(rf,type='l',col='green',ylab='Conditional Variance',ylim=c(0,h),xlab='t')");// DEBUG,纵轴无穷大导致
 			c.eval("par(new=TRUE)");
-			c.eval("plot(fm1,col='red',type='l',ylab='Conditional Variance',ylim=c(0,h),xlab='t',main=MAPE_1)");// 拟合值
+			c.eval("plot(pm1,col='red',type='l',ylab='Conditional Variance',ylim=c(0,h),xlab='t',main=MAPE_1)");// 拟合值
 			c.eval("dev.off()");
 		} catch (Exception exception)
 		{
@@ -313,6 +316,8 @@ public class RServeConnection
 				+ ".json";
 		outputFilePath = folderPath + "output/Predict-garch(" + p + "," + q
 				+ ")-" + inputJsonName + ".json";
+		MAPEPATH = folderPath + "MAPE/MAPE-" + inputJsonName + ".json";
+		MAPEPICPATH = folderPath + "MAPE/MAPE-" + inputJsonName + ".jpg";
 		real_list.clear();
 		real_var_list.clear();
 		try
@@ -372,8 +377,11 @@ public class RServeConnection
 
 			// c.eval("fm1<-(fitted(m1)[,1])^2");
 			c.eval("fm1<-(predict(m1)[,1])^2");
+			c.eval("fm1[1]<-fm1[2]");
+			c.eval("rf<-as.double(rf)");
+			c.eval("rfv<-as.double(rfv)");
 			// c.eval("fm1<-(predict(m1,newdata=data.frame(learnstep:(learnstep+learnstep)))[,1])^2");
-			c.eval("h<-max(max(as.double(rf)),max(fm1[2:learnstep]))");
+			c.eval("h<-max(max(rf),max(fm1))");
 
 			// 纵轴为无穷大时,直接设置为1
 			if (c.eval("h").asDouble() >= Double.MAX_VALUE
@@ -391,36 +399,24 @@ public class RServeConnection
 			else
 				System.out.println("预测数据写入失败 : " + outputFilePath);
 
-			c.eval("acv1<-mean(as.double(rf))/mean((as.double(fm1)[2:learnstep]))");
-			c.eval("acv2<-mean(as.double(rfv))/mean((as.double(fm1)[2:learnstep]))");
-			c.eval("MAPE_1<-accuracy(as.double(rf[2:learnstep])/acv1,(as.double(fm1))[2:learnstep])[5]")
-					.asDouble();
-			c.eval("MAPE_2<-accuracy((as.double(fm1)*acv2)[2:learnstep],as.double(rfv))[5]")
-					.asDouble();
-			c.eval("MAPE_3<-accuracy(as.double(rf),as.double(rfv))[5]")
-					.asDouble();
+			c.eval("pm1<-fm1 - min(fm1) + min(rf)");
+
+			c.eval("MAPE_1<-accuracy(rf,fm1)[5]").asDouble();
+			c.eval("MAPE_2<-accuracy(rfv,fm1)[5]").asDouble();
 			double MAPE_1 = c.eval("MAPE_1").asDouble();
 			double MAPE_2 = c.eval("MAPE_2").asDouble();
-			double MAPE_3 = c.eval("MAPE_3").asDouble();
-			if (MAPE_1 != MAPE_1 || MAPE_1 >= Double.MAX_VALUE)
+			if (MAPE_1 != MAPE_1
+					|| c.eval("is.infinite(MAPE_1)").asString().equals("TRUE"))
 			{
-				c.eval("MAPE_1<-accuracy((as.double(fm1))[2:learnstep],as.double(rf[2:learnstep])/acv1)[5]")
-						.asDouble();
+				c.eval("MAPE_1<-accuracy(pm1,rf)[5]").asDouble();
 				MAPE_1 = c.eval("MAPE_1").asDouble();
 			}
 
-			if (MAPE_2 != MAPE_2 || MAPE_2 >= Double.MAX_VALUE)
+			if (MAPE_2 != MAPE_2
+					|| c.eval("is.infinite(MAPE_2)").asString().equals("TRUE"))
 			{
-				c.eval("MAPE_2<-accuracy(as.double(rfv),(as.double(fm1)*acv2)[2:learnstep])[5]")
-						.asDouble();
+				c.eval("MAPE_2<-accuracy(pm1,rfv)[5]").asDouble();
 				MAPE_2 = c.eval("MAPE_2").asDouble();
-			}
-
-			if (MAPE_3 != MAPE_3 || MAPE_3 >= Double.MAX_VALUE)
-			{
-				c.eval("MAPE_3<-accuracy(as.double(rfv),as.double(rf))[5]")
-						.asDouble();
-				MAPE_3 = c.eval("MAPE_3").asDouble();
 			}
 
 			c.eval("MAPE<-min(as.double(MAPE_1),as.double(MAPE_2))");
@@ -429,20 +425,48 @@ public class RServeConnection
 			c.eval("par(new=TRUE)");
 			c.eval("plot(rfv,type='l',col='blue',ylab='Conditional Variance',ylim=c(0,h),axes = FALSE,xlab='t')");
 			c.eval("par(new=TRUE)");
-			c.eval("plot(fm1,col='red',type='l',ylab='Conditional Variance',ylim=c(0,h),xlab='t',main=MAPE)");// 拟合值
+			c.eval("plot(pm1,col='red',type='l',ylab='Conditional Variance',ylim=c(0,h),xlab='t',main=MAPE)");// 拟合值
 			c.eval("dev.off()");
 
 			System.out.println("MAPE_1=" + MAPE_1);
 			System.out.println("MAPE_2=" + MAPE_2);
-			System.out.println("MAPE_3=" + MAPE_3);
 
+			ArrayList mape_list = new ArrayList();
+			for (int i = 0; i < learnstep / lenth_mape; i++)
+			{
+				double mape = c.eval(
+						"accuracy(rf[" + (i * lenth_mape + 1) + ":"
+								+ (i * lenth_mape + lenth_mape) + "],fm1["
+								+ (i * lenth_mape + 1) + ":"
+								+ (i * lenth_mape + lenth_mape) + "])[5]")
+						.asDouble();
+				mape_list.add(new Double(mape));
+			}
+			JsonFileHelper mape_json = new JsonFileHelper();
+			if (mape_json.SavetoJson(mape_list, MAPEPATH, "MAPE"))
+				System.out.println("MAPE数据写入成功 : " + MAPEPATH);
+			else
+				System.out.println("MAPE数据写入失败 : " + MAPEPATH);
+			c.eval("json_mape<-fromJSON(paste(readLines('" + MAPEPATH
+					+ "'), collapse=''))");
+			c.eval("source('D:/workspace/garch/test/timeseriesanalysis/mape.R')");
+			c.eval("rmape<-as.double(rmape)");
+			c.eval("jpeg('" + MAPEPICPATH + "')");
+			c.eval("plot(rmape,type='o',col='green',ylim=c(0,max(150,max(rmape)*1.1)),ylab='MAPE (%)',xlab='prestep')");
+			c.eval("abline(h=100)");
+			c.eval("dev.off()");
 		} catch (Exception exception)
 		{
 			System.out.println(exception.toString());
 			exception.printStackTrace();
 		}
 	}
-
+	
+	public void mape_pic()
+	{
+		filePath = MAPEPICPATH;
+	}
+	
 	public void acf(int p, int q)
 	{
 		filePath = folderPath + "ACF-garch(" + p + "," + q + ")-"
@@ -483,22 +507,6 @@ public class RServeConnection
 		{
 			c.eval("jpeg('" + filePath + "')");
 			c.eval("acf(abs(residuals(m1)),na.action=na.omit)");
-			c.eval("dev.off()");
-		} catch (Exception exception)
-		{
-			System.out.println(exception.toString());
-			exception.printStackTrace();
-		}
-	}
-
-	public void gbox(int p, int q)
-	{
-		filePath = folderPath + "gBox-garch(" + p + "," + q + ")-"
-				+ inputJsonName + ".jpg";
-		try
-		{
-			c.eval("jpeg('" + filePath + "')");
-			c.eval("gBox(m1,method='squared')");
 			c.eval("dev.off()");
 		} catch (Exception exception)
 		{
