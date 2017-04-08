@@ -23,10 +23,13 @@ public class RServeConnection
 	private static String predictPath;
 	private static double t_predict;
 	private static double t_long;
+	
 	private static int base = 100;// 拟合起点
+	private static int n = 0;
+	
 	private static int learnstep = 100;// 拟合长度
 	private static int prestep = 5;// 取样间隔
-	private static int lenth_mape = 10;// MAPE间隔
+	private static int lenth_mape = 5;// MAPE间隔
 	private static double aic;
 	private static ArrayList predict_list;// 向前预测序列
 	private static ArrayList real_list;
@@ -35,6 +38,31 @@ public class RServeConnection
 
 	public RServeConnection()
 	{
+		index = 1;
+		folderPath = "D://R-Data/" + inputJsonName + "-"; // 默认写入D盘R-Data文件夹
+	}
+	
+	public RServeConnection(int b,int nb)
+	{
+		base = b;
+		n = nb;
+		index = 1;
+		folderPath = "D://R-Data/" + inputJsonName + "-"; // 默认写入D盘R-Data文件夹
+	}
+	
+	public RServeConnection(int nb)
+	{
+		n = nb;
+		if(n==0)
+			base = 100;
+		else if(n==1)
+			base = 140;
+		else if(n==2)
+			base = 170;
+		else if(n==3)
+			base = 200;
+		else if(n==4)
+			base = 230;
 		index = 1;
 		folderPath = "D://R-Data/" + inputJsonName + "-"; // 默认写入D盘R-Data文件夹
 	}
@@ -403,18 +431,20 @@ public class RServeConnection
 			// c.eval("pm1<-fm1");
 			c.eval("pm1<-fm1 - min(fm1) + min(rf)");
 			// c.eval("fm1<-fm1 - min(fm1) + min(rf)");
-			
-			c.eval("MAPE_1<-accuracy(rf + min(fm1) - min(rf),fm1)[5]").asDouble();
-			c.eval("MAPE_2<-accuracy(rfv + min(fm1) - min(rf),fm1)[5]").asDouble();
+
+			c.eval("MAPE_1<-accuracy(rf + min(fm1) - min(rf),fm1)[5]")
+					.asDouble();
+			c.eval("MAPE_2<-accuracy(rfv + min(fm1) - min(rf),fm1)[5]")
+					.asDouble();
 			double MAPE_1 = c.eval("MAPE_1").asDouble();
 			double MAPE_2 = c.eval("MAPE_2").asDouble();
 
 			c.eval("MAPE<-min(as.double(MAPE_1),as.double(MAPE_2))");
-			
+
 			c.eval("rf<-rf[length(rf):1]");
 			c.eval("rfv<-rfv[length(rfv):1]");
 			c.eval("pm1<-pm1[length(pm1):1]");
-			
+
 			c.eval("jpeg('" + filePath + "')");
 			c.eval("plot(rf,type='l',col='green',ylab='Conditional Variance',ylim=c(0,h),xlab='t')");// DEBUG,纵轴无穷大导致
 			c.eval("par(new=TRUE)");
@@ -427,10 +457,13 @@ public class RServeConnection
 			System.out.println("MAPE_2=" + MAPE_2);
 
 			ArrayList mape_list = new ArrayList();
-			for (int i = 0; i < learnstep / lenth_mape; i++)
+			int mape_length = learnstep / lenth_mape;
+			c.eval("mape_length<-" + mape_length);
+			for (int i = 0; i < mape_length; i++)
 			{
 				double mape = c.eval(
-						"accuracy((rf+ min(fm1) - min(rf))[" + (i * lenth_mape + 1) + ":"
+						"accuracy((rf+ min(fm1) - min(rf))["
+								+ (i * lenth_mape + 1) + ":"
 								+ (i * lenth_mape + lenth_mape) + "],fm1["
 								+ (i * lenth_mape + 1) + ":"
 								+ (i * lenth_mape + lenth_mape) + "])[5]")
@@ -446,11 +479,17 @@ public class RServeConnection
 					+ "'), collapse=''))");
 			c.eval("source('D:/workspace/garch/test/timeseriesanalysis/mape.R')");
 			c.eval("rmape<-as.double(rmape)");
-			
+
 			c.eval("jpeg('" + MAPEPICPATH + "')");
-			c.eval("plot(rmape,type='b',col='green',ylim=c(0,max(150,max(rmape)*1.1)),ylab='MAPE (%)',xlab='prestep')");
+			c.eval("plot(sort(rmape),type='b',col='green',ylim=c(0,max(150,max(rmape)*1.1)),ylab='MAPE (%)',xlab='prestep')");
 			c.eval("abline(h=100)");
 			c.eval("dev.off()");
+
+			// 大数据处理
+			c.eval("result<-data.frame(Alname='GARCH',vmtype='" + inputJsonName
+					+ "',time="+n+",prestep=c(1:mape_length),MAPE=sort(rmape))");
+			c.eval("write.csv(result,'D:/R-Data/result/result-" + inputJsonName +n+".csv')");
+
 		} catch (Exception exception)
 		{
 			System.out.println(exception.toString());

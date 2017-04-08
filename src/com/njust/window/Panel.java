@@ -124,9 +124,9 @@ public class Panel
 		btn_predict.setText("向前预测");
 		btn_predict.setBounds(531, 751, 80, 27);
 
-		final RServeConnection rsc = new RServeConnection();
+		final RServeConnection rsc = new RServeConnection(4);
 		rsc.setFolderPath("D", "R-Data");
-
+		
 		Label lblP = new Label(shell, SWT.NONE);
 		lblP.setText("p=");
 		lblP.setAlignment(SWT.RIGHT);
